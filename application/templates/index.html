@@ -1,115 +1,485 @@
 {% extends "base.html" %}
 
-{% block title %}Health Screening Dashboard - VitaSense{% endblock %}
+{% block title %}Dashboard - HealthAI Multi-Feature Health Screening{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-12 col-lg-9">
-        
-        <!-- Header / Welcome Banner -->
-        <div class="card shadow-sm border-0 rounded-4 mb-4 bg-white">
-            <div class="card-body p-4 p-md-5">
-                <div class="d-flex flex-column flex-md-row align-items-center gap-4">
-                    {% if user.profile %}
-                        <img src="{{ url_for('serve_asset', filename=user.profile) }}" alt="Profile Picture" class="rounded-circle shadow-sm" width="90" height="90" style="object-fit: cover;">
-                    {% else %}
-                        <div class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center" style="width: 90px; height: 90px; font-size: 2.5rem;">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                    {% endif %}
-                    <div class="text-center text-md-start">
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill mb-2">
-                            <i class="bi bi-check-circle-fill me-1"></i>Health Intake Completed
-                        </span>
-                        <h2 class="fw-bold mb-1">Welcome, {{ user.username if user.username else user.email }}</h2>
-                        <p class="text-muted mb-0"><i class="bi bi-envelope me-1"></i>{{ user.email }}</p>
-                    </div>
+<div class="container py-4">
+
+    <!-- 1. HERO / FEATURE CAROUSEL -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-12">
+            <div id="featureHeroCarousel" class="carousel slide shadow-sm overflow-hidden border bg-white"
+                data-bs-ride="carousel" data-bs-pause="hover" data-bs-interval="6000">
+
+                <!-- Carousel Indicators -->
+                <div class="carousel-indicators mb-3">
+                    <button type="button" data-bs-target="#featureHeroCarousel" data-bs-slide-to="0" class="active"
+                        aria-current="true" aria-label="Slide 1"></button>
+                    <button type="button" data-bs-target="#featureHeroCarousel" data-bs-slide-to="1"
+                        aria-label="Slide 2"></button>
+                    <button type="button" data-bs-target="#featureHeroCarousel" data-bs-slide-to="2"
+                        aria-label="Slide 3"></button>
+                    <button type="button" data-bs-target="#featureHeroCarousel" data-bs-slide-to="3"
+                        aria-label="Slide 4"></button>
+                    <button type="button" data-bs-target="#featureHeroCarousel" data-bs-slide-to="4"
+                        aria-label="Slide 5"></button>
                 </div>
+
+                <!-- Carousel Items -->
+                <div class="carousel-inner">
+
+                    <!-- SLIDE 1: AI-Powered Health Screening -->
+                    <div class="carousel-item active p-4 p-md-5">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-8 col-lg-7 text-center text-md-start">
+                                <span
+                                    class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-semibold mb-3">
+                                    <i class="bi bi-cpu me-1"></i>Multi-Modal Health Engine
+                                </span>
+                                <h1 class="display-6 fw-bold text-dark mb-3">AI-Powered Health Screening</h1>
+                                <p class="lead text-secondary mb-4 fs-6">Get a preliminary health-risk assessment using
+                                    symptoms, visual indicators and health information.</p>
+                                <div>
+                                    <a href="{{ url_for('screening') }}"
+                                        class="btn btn-primary btn-lg rounded-pill px-4 fw-semibold shadow-sm">
+                                        Start a Checkup <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4 col-lg-5 text-center d-none d-md-block">
+                                <div class="p-4 rounded-circle bg-primary-subtle d-inline-flex align-items-center justify-content-center text-primary"
+                                    style="width: 150px; height: 150px; font-size: 4rem;">
+                                    <i class="bi bi-heart-pulse-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SLIDE 2: Visual Health Screening -->
+                    <div class="carousel-item p-4 p-md-5">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-8 col-lg-7 text-center text-md-start">
+                                <span class="badge bg-info-subtle text-info px-3 py-2 rounded-pill fw-semibold mb-3">
+                                    <i class="bi bi-camera me-1"></i>Computer Vision
+                                </span>
+                                <h2 class="display-6 fw-bold text-dark mb-3">Visual Health Screening</h2>
+                                <p class="lead text-secondary mb-4 fs-6">Analyze selected visible features such as the
+                                    tongue, eyes and nails as part of preliminary screening.</p>
+                                <div>
+                                    <a href="{{ url_for('visual_screening') }}"
+                                        class="btn btn-primary btn-lg rounded-pill px-4 fw-semibold shadow-sm">
+                                        Explore Visual Screening <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4 col-lg-5 text-center d-none d-md-block">
+                                <div class="p-4 rounded-circle bg-info-subtle d-inline-flex align-items-center justify-content-center text-info"
+                                    style="width: 150px; height: 150px; font-size: 4rem;">
+                                    <i class="bi bi-eye-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SLIDE 3: Lab Report Analysis -->
+                    <div class="carousel-item p-4 p-md-5">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-8 col-lg-7 text-center text-md-start">
+                                <span
+                                    class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-semibold mb-3">
+                                    <i class="bi bi-file-earmark-medical me-1"></i>Biomarker Intake
+                                </span>
+                                <h2 class="display-6 fw-bold text-dark mb-3">Lab Report Analysis</h2>
+                                <p class="lead text-secondary mb-4 fs-6">Upload your laboratory report and organize
+                                    relevant health values in one place.</p>
+                                <div>
+                                    <a href="{{ url_for('lab_analysis') }}"
+                                        class="btn btn-primary btn-lg rounded-pill px-4 fw-semibold shadow-sm">
+                                        Upload Lab Report <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4 col-lg-5 text-center d-none d-md-block">
+                                <div class="p-4 rounded-circle bg-success-subtle d-inline-flex align-items-center justify-content-center text-success"
+                                    style="width: 150px; height: 150px; font-size: 4rem;">
+                                    <i class="bi bi-clipboard2-pulse-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SLIDE 4: Symptom Assessment -->
+                    <div class="carousel-item p-4 p-md-5">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-8 col-lg-7 text-center text-md-start">
+                                <span class="badge bg-warning-subtle text-dark px-3 py-2 rounded-pill fw-semibold mb-3">
+                                    <i class="bi bi-chat-heart me-1"></i>Guided Intake
+                                </span>
+                                <h2 class="display-6 fw-bold text-dark mb-3">Symptom Assessment</h2>
+                                <p class="lead text-secondary mb-4 fs-6">Answer a few simple questions about how you're
+                                    feeling and identify potential health risks.</p>
+                                <div>
+                                    <a href="{{ url_for('symptom_assessment') }}"
+                                        class="btn btn-primary btn-lg rounded-pill px-4 fw-semibold shadow-sm">
+                                        Check Symptoms <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4 col-lg-5 text-center d-none d-md-block">
+                                <div class="p-4 rounded-circle bg-warning-subtle d-inline-flex align-items-center justify-content-center text-warning"
+                                    style="width: 150px; height: 150px; font-size: 4rem;">
+                                    <i class="bi bi-question-circle-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SLIDE 5: Track Your Health -->
+                    <div class="carousel-item p-4 p-md-5">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-8 col-lg-7 text-center text-md-start">
+                                <span
+                                    class="badge bg-secondary-subtle text-dark px-3 py-2 rounded-pill fw-semibold mb-3">
+                                    <i class="bi bi-graph-up me-1"></i>Longitudinal Tracking
+                                </span>
+                                <h2 class="display-6 fw-bold text-dark mb-3">Track Your Health</h2>
+                                <p class="lead text-secondary mb-4 fs-6">Review your previous screenings and compare
+                                    your health-risk results over time.</p>
+                                <div>
+                                    <a href="{{ url_for('health_history') }}"
+                                        class="btn btn-primary btn-lg rounded-pill px-4 fw-semibold shadow-sm">
+                                        View Health History <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4 col-lg-5 text-center d-none d-md-block">
+                                <div class="p-4 rounded-circle bg-secondary-subtle d-inline-flex align-items-center justify-content-center text-secondary"
+                                    style="width: 150px; height: 150px; font-size: 4rem;">
+                                    <i class="bi bi-activity"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Controls -->
+                <!-- Controls -->
+                <button class="carousel-control-prev border-0" type="button" data-bs-target="#featureHeroCarousel"
+                    data-bs-slide="prev" style="width: 5%; opacity: 1;">
+                    <span class="carousel-control-prev-icon bg-dark rounded-circle p-3" aria-hidden="true"
+                        style="filter: invert(1); background-size: 45%;"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next border-0" type="button" data-bs-target="#featureHeroCarousel"
+                    data-bs-slide="next" style="width: 5%; opacity: 1;">
+                    <span class="carousel-control-next-icon bg-dark rounded-circle p-3" aria-hidden="true"
+                        style="filter: invert(1); background-size: 45%;"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
             </div>
         </div>
+    </div>
 
-        <!-- Health Profile Data Cards -->
-        {% if profile %}
-            <div class="row g-3 mb-4">
-                <!-- Age Card -->
-                <div class="col-6 col-md-4 col-xl-2">
-                    <div class="card shadow-sm border-0 rounded-3 text-center p-3 h-100 bg-white">
-                        <span class="text-muted small text-uppercase fw-semibold">Age</span>
-                        <h3 class="fw-bold text-dark mt-2 mb-0">{{ profile.age }}</h3>
-                        <span class="text-muted small">years</span>
-                    </div>
-                </div>
-
-                <!-- Sex Card -->
-                <div class="col-6 col-md-4 col-xl-2">
-                    <div class="card shadow-sm border-0 rounded-3 text-center p-3 h-100 bg-white">
-                        <span class="text-muted small text-uppercase fw-semibold">Sex</span>
-                        <h4 class="fw-bold text-dark mt-2 mb-0 text-truncate">{{ profile.sex }}</h4>
-                        <span class="text-muted small">biological</span>
-                    </div>
-                </div>
-
-                <!-- Height Card -->
-                <div class="col-6 col-md-4 col-xl-2">
-                    <div class="card shadow-sm border-0 rounded-3 text-center p-3 h-100 bg-white">
-                        <span class="text-muted small text-uppercase fw-semibold">Height</span>
-                        <h3 class="fw-bold text-dark mt-2 mb-0">{{ profile.height }}</h3>
-                        <span class="text-muted small">{{ profile.height_unit }}</span>
-                    </div>
-                </div>
-
-                <!-- Weight Card -->
-                <div class="col-6 col-md-4 col-xl-2">
-                    <div class="card shadow-sm border-0 rounded-3 text-center p-3 h-100 bg-white">
-                        <span class="text-muted small text-uppercase fw-semibold">Weight</span>
-                        <h3 class="fw-bold text-dark mt-2 mb-0">{{ profile.weight }}</h3>
-                        <span class="text-muted small">{{ profile.weight_unit }}</span>
-                    </div>
-                </div>
-
-                <!-- Diet Card -->
-                <div class="col-6 col-md-4 col-xl-2">
-                    <div class="card shadow-sm border-0 rounded-3 text-center p-3 h-100 bg-white">
-                        <span class="text-muted small text-uppercase fw-semibold">Diet</span>
-                        <h5 class="fw-bold text-dark mt-2 mb-0 text-truncate">{{ profile.diet }}</h5>
-                        <span class="text-muted small">lifestyle</span>
-                    </div>
-                </div>
-
-                <!-- BMI Card -->
-                <div class="col-6 col-md-4 col-xl-2">
-                    <div class="card shadow-sm border-0 rounded-3 text-center p-3 h-100 bg-primary-subtle text-primary border border-primary-subtle">
-                        <span class="small text-uppercase fw-bold">BMI</span>
-                        <h3 class="fw-bold mt-2 mb-0">{{ profile.bmi if profile.bmi else 'N/A' }}</h3>
-                        <span class="small">kg/m²</span>
+    <!-- 2. PRIMARY "START CHECKUP" SECTION -->
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if not has_screenings %}
+            <!-- Empty State Checkup Card -->
+            <div class="card shadow-sm border-0 rounded-4 bg-white p-4 p-md-5 text-center">
+                <div class="col-lg-8 mx-auto">
+                    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-semibold mb-2">Welcome
+                        to HealthAI</span>
+                    <h3 class="fw-bold text-dark mb-2">Your first checkup is waiting</h3>
+                    <p class="text-secondary mb-4">Complete a quick health screening to get your preliminary health-risk
+                        overview across visual, nutritional, and metabolic parameters.</p>
+                    <div>
+                        <a href="{{ url_for('screening') }}"
+                            class="btn btn-primary btn-lg rounded-pill px-5 fw-semibold shadow-sm">
+                            Start Your First Checkup <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
                     </div>
                 </div>
             </div>
-
-            <!-- Health Screening Status / Stage 2 Banner -->
-            <div class="card shadow-sm border-0 rounded-4 bg-white mb-4">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <h5 class="fw-bold mb-0"><i class="bi bi-heart-pulse-fill text-danger me-2"></i>Next Stage: Clinical Symptom Assessment</h5>
-                        <span class="badge bg-secondary">Coming Soon</span>
+            {% else %}
+            <!-- Returning User Checkup Card -->
+            <div class="card shadow-sm border-0 rounded-4 bg-white p-4 p-md-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill mb-2">
+                            <i class="bi bi-arrow-repeat me-1"></i>Routine Screening Available
+                        </span>
+                        <h4 class="fw-bold text-dark mb-1">Ready for another checkup?</h4>
+                        <p class="text-secondary mb-0 small">Run a new screening and compare your results with your
+                            previous assessments.</p>
                     </div>
-                    <p class="text-muted mb-0">Your basic baseline measurements have been securely registered. Detailed health symptom screening and personalized risk assessments will be conducted in the next phase.</p>
+                    <div>
+                        <a href="{{ url_for('screening') }}"
+                            class="btn btn-primary btn-lg rounded-pill px-4 fw-semibold shadow-sm text-nowrap">
+                            Start New Checkup <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
+            {% endif %}
+        </div>
+    </div>
 
-            <!-- Medical Information Disclaimer -->
-            <div class="alert alert-light border rounded-3 text-muted small mb-4" role="alert">
-                <i class="bi bi-info-circle me-1"></i><strong>Medical Disclaimer:</strong> Body Mass Index (BMI) is an approximate statistical indicator and does not directly measure body composition, muscle distribution, or diagnose any medical condition.
+    <!-- 3. HEALTH SNAPSHOT -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i>Your Health
+                    Snapshot</h5>
+                {% if has_screenings %}
+                <span class="text-muted small">Updated from your latest assessment</span>
+                {% endif %}
             </div>
-        {% endif %}
 
-        <!-- Actions -->
-        <div class="d-flex justify-content-end">
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
-                <i class="bi bi-box-arrow-right me-1"></i>Logout
-            </a>
+            {% if has_screenings and latest_report %}
+            <div class="row g-3">
+                <!-- Nutrition Risk Card -->
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm border-0 rounded-4 p-3 bg-white h-100">
+                        <div class="text-muted small fw-semibold text-uppercase mb-1">Nutrition</div>
+                        <h4 class="fw-bold text-dark mb-2">{{ latest_report.nutrition_risk }}</h4>
+                        <span
+                            class="badge bg-{{ 'warning-subtle text-warning' if 'Moderate' in latest_report.nutrition_risk else 'success-subtle text-success' }} rounded-pill align-self-start small">
+                            Screening indicator
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Metabolic Risk Card -->
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm border-0 rounded-4 p-3 bg-white h-100">
+                        <div class="text-muted small fw-semibold text-uppercase mb-1">Metabolic</div>
+                        <h4 class="fw-bold text-dark mb-2">{{ latest_report.metabolic_risk }}</h4>
+                        <span
+                            class="badge bg-{{ 'warning-subtle text-warning' if 'Moderate' in latest_report.metabolic_risk else 'success-subtle text-success' }} rounded-pill align-self-start small">
+                            Screening indicator
+                        </span>
+                    </div>
+                </div>
+
+                <!-- General Health Card -->
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm border-0 rounded-4 p-3 bg-white h-100">
+                        <div class="text-muted small fw-semibold text-uppercase mb-1">General Health</div>
+                        <h4 class="fw-bold text-dark mb-2">{{ latest_report.general_risk }}</h4>
+                        <span
+                            class="badge bg-{{ 'warning-subtle text-warning' if 'Moderate' in latest_report.general_risk else 'success-subtle text-success' }} rounded-pill align-self-start small">
+                            Screening indicator
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Last Screening Date Card -->
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm border-0 rounded-4 p-3 bg-light border-0 h-100">
+                        <div class="text-muted small fw-semibold text-uppercase mb-1">Last Screening</div>
+                        <h4 class="fw-bold text-dark mb-2">{{ latest_report.created_at }}</h4>
+                        <span class="text-muted small"><i class="bi bi-clock-history me-1"></i>{{
+                            latest_report.category_count }} areas evaluated</span>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card shadow-sm border-0 rounded-4 bg-white p-4 text-center">
+                <p class="text-muted mb-0">Complete your first screening to see your health snapshot.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 4. RECENT REPORTS & RECOMMENDED NEXT STEP -->
+    <div class="row g-4 mb-4">
+
+        <!-- Left: Recent Reports -->
+        <div class="col-12 col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-file-earmark-medical text-primary me-2"></i>Recent
+                    Reports</h5>
+                {% if has_screenings %}
+                <a href="{{ url_for('reports') }}" class="text-decoration-none fw-semibold small">
+                    View All Reports <i class="bi bi-arrow-right"></i>
+                </a>
+                {% endif %}
+            </div>
+
+            {% if has_screenings and recent_reports %}
+            <div class="row g-3">
+                {% for r in recent_reports %}
+                <div class="col-12">
+                    <div class="card shadow-sm border-0 rounded-4 bg-white p-3 p-md-4">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="text-muted small">{{ r.created_at }}</span>
+                                    <span class="badge bg-light text-secondary border rounded-pill small">{{
+                                        r.category_count }} areas screened</span>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-2">{{ r.title }}</h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <span class="badge bg-light text-dark border rounded-pill small">Nutrition: {{
+                                        r.nutrition_risk }}</span>
+                                    <span class="badge bg-light text-dark border rounded-pill small">Metabolic: {{
+                                        r.metabolic_risk }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('report_detail', report_id=r.id) }}"
+                                    class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                    View Report <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card shadow-sm border-0 rounded-4 bg-white p-4 text-center">
+                <div class="rounded-circle bg-light text-muted d-inline-flex align-items-center justify-content-center mb-2 mx-auto"
+                    style="width: 50px; height: 50px; font-size: 1.5rem;">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <h6 class="fw-bold">No health reports yet</h6>
+                <p class="text-muted small mb-3">Complete your first screening to generate your first report.</p>
+                <div>
+                    <a href="{{ url_for('screening') }}" class="btn btn-outline-primary btn-sm rounded-pill px-4">
+                        Start Your First Checkup <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right: Recommended Next Step -->
+        <div class="col-12 col-lg-4">
+            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-compass text-primary me-2"></i>Recommended Next Step</h5>
+
+            <div
+                class="card shadow-sm border-0 rounded-4 bg-white p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    {% if not has_screenings %}
+                    <div class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center mb-3"
+                        style="width: 48px; height: 48px; font-size: 1.3rem;">
+                        <i class="bi bi-play-fill"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Start your first health screening</h5>
+                    <p class="text-secondary small mb-4">Complete your initial baseline evaluation to benchmark your
+                        nutritional and metabolic screening categories.</p>
+                    {% elif not has_lab_report %}
+                    <div class="rounded-circle bg-success-subtle text-success d-inline-flex align-items-center justify-content-center mb-3"
+                        style="width: 48px; height: 48px; font-size: 1.3rem;">
+                        <i class="bi bi-file-earmark-arrow-up-fill"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Upload a laboratory report</h5>
+                    <p class="text-secondary small mb-4">Want a more complete health overview? Upload a laboratory
+                        report to integrate your blood panel values.</p>
+                    {% else %}
+                    <div class="rounded-circle bg-info-subtle text-info d-inline-flex align-items-center justify-content-center mb-3"
+                        style="width: 48px; height: 48px; font-size: 1.3rem;">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Review your screening history</h5>
+                    <p class="text-secondary small mb-4">Track biomarker progression and compare screening assessments
+                        over time.</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    {% if not has_screenings %}
+                    <a href="{{ url_for('screening') }}" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">
+                        Start Checkup <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                    {% elif not has_lab_report %}
+                    <a href="{{ url_for('lab_analysis') }}" class="btn btn-success w-100 rounded-pill py-2 fw-semibold">
+                        Upload Lab Report <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('health_history') }}"
+                        class="btn btn-outline-primary w-100 rounded-pill py-2 fw-semibold">
+                        View Health History <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
 
     </div>
+
+    <!-- 5. HEALTH INSIGHTS -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-lightbulb text-primary me-2"></i>Health Insights</h5>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <div class="card shadow-sm border-0 rounded-4 bg-white p-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-primary-subtle text-primary p-3">
+                                <i class="bi bi-check2-all fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">
+                                    {% if reports and reports|length > 0 %}
+                                    You've completed {{ reports|length }} health screening{{ 's' if reports|length > 1
+                                    else '' }}.
+                                    {% else %}
+                                    Ready for your 1st screening.
+                                    {% endif %}
+                                </h6>
+                                <p class="text-muted small mb-0">Screenings track progress over time.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="card shadow-sm border-0 rounded-4 bg-white p-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-info-subtle text-info p-3">
+                                <i class="bi bi-grid-fill fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">
+                                    {% if latest_report %}
+                                    Latest screening included {{ latest_report.category_count }} categories.
+                                    {% else %}
+                                    4 health categories evaluated.
+                                    {% endif %}
+                                </h6>
+                                <p class="text-muted small mb-0">Nutrition, Metabolic & Visual indicators.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="card shadow-sm border-0 rounded-4 bg-white p-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-success-subtle text-success p-3">
+                                <i class="bi bi-shield-check fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">
+                                    {% if profile and profile.bmi %}
+                                    Baseline BMI: {{ profile.bmi }} kg/m²
+                                    {% else %}
+                                    Intake profile registered.
+                                    {% endif %}
+                                </h6>
+                                <p class="text-muted small mb-0">Statistical baseline reference.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 {% endblock %}

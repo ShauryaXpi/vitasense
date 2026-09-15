@@ -35,6 +35,30 @@ class UserProfile(Base):
     def __repr__(self):
         return f"<UserProfile (user_id={self.user_id}, age={self.age}, bmi={self.bmi})>"
 
+class HealthReport(Base):
+    __tablename__ = 'health_reports'
+
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    title: Mapped[str] = mapped_column(nullable=False) # e.g. "General Health Screening"
+    screening_type: Mapped[str] = mapped_column(nullable=False) # e.g. "Preliminary Visual & Symptom Intake"
+    category_count: Mapped[int] = mapped_column(default=4)
+    nutrition_risk: Mapped[str] = mapped_column(default="Low screening risk")
+    metabolic_risk: Mapped[str] = mapped_column(default="Low screening risk")
+    general_risk: Mapped[str] = mapped_column(default="Low screening risk")
+    summary: Mapped[str] = mapped_column(nullable=True)
+    selected_modules_json: Mapped[str] = mapped_column(nullable=True)
+    risk_results_json: Mapped[str] = mapped_column(nullable=True)
+    visual_summary: Mapped[str] = mapped_column(nullable=True)
+    questionnaire_summary: Mapped[str] = mapped_column(nullable=True)
+    lab_findings: Mapped[str] = mapped_column(nullable=True)
+    pdf_path: Mapped[str] = mapped_column(nullable=True)
+    has_lab_report: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[str] = mapped_column(nullable=False) # e.g. "Sep 15, 2026"
+
+    def __repr__(self):
+        return f"<HealthReport (id={self.id}, user_id={self.user_id}, title={self.title})>"
+
 @login_manager.user_loader
 def load_user(user_id):
     with Session() as session:

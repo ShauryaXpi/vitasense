@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Select Screening Modules - VitaSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+
+            <div class="card shadow-sm border-0 rounded-4 bg-white p-4 p-md-5">
+                
+                <div class="text-center mb-4">
+                    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold mb-2">
+                        <i class="bi bi-sliders me-1"></i>Step 1 of Checkup Setup
+                    </span>
+                    <h2 class="fw-bold text-dark">Which health screening report would you like?</h2>
+                    <p class="text-muted">Choose the health areas you'd like to screen for. You can select one or more.</p>
+                </div>
+
+                <!-- Real-Time Search Bar -->
+                <div class="mb-4">
+                    <div class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden border">
+                        <span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-search fs-5"></i></span>
+                        <input type="text" id="searchInput" class="form-control border-0" placeholder="Search deficiencies or health risks (e.g., iron, vitamin d, folate, hemoglobin)..." onkeyup="filterModules()">
+                    </div>
+                </div>
+
+                <form id="selectForm" method="POST" action="{{ url_for('start_checkup') }}">
+                    
+                    <!-- Module Selection Cards Grid -->
+                    <div class="row g-3 mb-4" id="modulesGrid">
+                        
+                        <!-- ANEMIA -->
+                        <div class="col-12 col-md-6 module-card-wrapper" data-search="anemia low hemoglobin risk iron tiredness fatigue pallor">
+                            <div class="card h-100 p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('anemia', this)">
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle bg-danger-subtle text-danger p-3">
+                                            <i class="bi bi-droplet-fill fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Anemia / Low Hemoglobin Risk</h6>
+                                            <span class="text-muted small">Visual, tiredness & lab screening</span>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="modules" value="anemia" id="chk_anemia" class="form-check-input mt-1 fs-5" onclick="event.stopPropagation(); updateSelectionState();">
+                                </div>
+                                <p class="text-secondary small mt-3 mb-0">Evaluates potential risk related to iron levels, tiredness, conjunctival pallor, and hemoglobin biomarkers.</p>
+                            </div>
+                        </div>
+
+                        <!-- VITAMIN D -->
+                        <div class="col-12 col-md-6 module-card-wrapper" data-search="vitamin d deficiency risk bone sun calcium supplements">
+                            <div class="card h-100 p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('vitamin_d', this)">
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle bg-warning-subtle text-warning p-3">
+                                            <i class="bi bi-sun-fill fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Vitamin D Deficiency Risk</h6>
+                                            <span class="text-muted small">Sun exposure, fatigue & lab intake</span>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="modules" value="vitamin_d" id="chk_vitamin_d" class="form-check-input mt-1 fs-5" onclick="event.stopPropagation(); updateSelectionState();">
+                                </div>
+                                <p class="text-secondary small mt-3 mb-0">Screens for indicators of low 25-hydroxy Vitamin D associated with low sun exposure and dietary intake.</p>
+                            </div>
+                        </div>
+
+                        <!-- FOLATE -->
+                        <div class="col-12 col-md-6 module-card-wrapper" data-search="folate deficiency risk b9 vitamin b diet tongue leaf">
+                            <div class="card h-100 p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('folate', this)">
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle bg-success-subtle text-success p-3">
+                                            <i class="bi bi-tree-fill fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Folate Deficiency Risk</h6>
+                                            <span class="text-muted small">Dietary pattern & serum folate</span>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="modules" value="folate" id="chk_folate" class="form-check-input mt-1 fs-5" onclick="event.stopPropagation(); updateSelectionState();">
+                                </div>
+                                <p class="text-secondary small mt-3 mb-0">Evaluates dietary folate patterns, tongue surface indicators, and serum folate lab values.</p>
+                            </div>
+                        </div>
+
+                        <!-- IODINE -->
+                        <div class="col-12 col-md-6 module-card-wrapper" data-search="iodine deficiency risk thyroid salt diet metabolic">
+                            <div class="card h-100 p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('iodine', this)">
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle bg-info-subtle text-info p-3">
+                                            <i class="bi bi-shield-heart-fill fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Iodine Deficiency Risk</h6>
+                                            <span class="text-muted small">Dietary salt & thyroid intake</span>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="modules" value="iodine" id="chk_iodine" class="form-check-input mt-1 fs-5" onclick="event.stopPropagation(); updateSelectionState();">
+                                </div>
+                                <p class="text-secondary small mt-3 mb-0">Screens for dietary iodine adequacy, iodized salt intake, and thyroid screening factors.</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Search Empty State -->
+                    <div id="noResultsState" class="d-none text-center p-4 bg-light rounded-4 mb-4">
+                        <i class="bi bi-search text-muted fs-2"></i>
+                        <h6 class="fw-bold mt-2">No matching screening modules found</h6>
+                        <p class="text-muted small mb-0">Try searching for "anemia", "vitamin", "folate", "iron", or "iodine".</p>
+                    </div>
+
+                    <!-- Action Bar -->
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="bi bi-arrow-left me-1"></i>Cancel
+                        </a>
+                        <button type="submit" id="submitBtn" class="btn btn-primary btn-lg rounded-pill px-5 fw-semibold" disabled>
+                            Continue <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleModule(modId, cardEl) {
+        const chk = document.getElementById('chk_' + modId);
+        chk.checked = !chk.checked;
+        updateSelectionState();
+    }
+
+    function updateSelectionState() {
+        const checkboxes = document.querySelectorAll('input[name="modules"]');
+        let selectedCount = 0;
+
+        checkboxes.forEach(chk => {
+            const card = chk.closest('.selection-card');
+            if (chk.checked) {
+                selectedCount++;
+                card.classList.add('border-primary', 'bg-primary-subtle');
+            } else {
+                card.classList.remove('border-primary', 'bg-primary-subtle');
+            }
+        });
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = (selectedCount === 0);
+    }
+
+    function filterModules() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        const wrappers = document.querySelectorAll('.module-card-wrapper');
+        let visibleCount = 0;
+
+        wrappers.forEach(w => {
+            const searchText = w.getAttribute('data-search');
+            if (!query || searchText.includes(query)) {
+                w.classList.remove('d-none');
+                visibleCount++;
+            } else {
+                w.classList.add('d-none');
+            }
+        });
+
+        const noRes = document.getElementById('noResultsState');
+        if (visibleCount === 0) {
+            noRes.classList.remove('d-none');
+        } else {
+            noRes.classList.add('d-none');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', updateSelectionState);
+</script>
+{% endblock %}

@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}Health Questionnaire - VitaSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+
+            <div class="card shadow-sm border-0 rounded-4 bg-white p-4 p-md-5">
+
+                {% if is_repeat %}
+                    <!-- REPEAT CHECKUP QUESTIONNAIRE -->
+                    <div class="text-center mb-4">
+                        <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold mb-2">
+                            <i class="bi bi-arrow-repeat me-1"></i>Repeat Checkup Follow-Up
+                        </span>
+                        <h2 class="fw-bold text-dark">What's changed since your last checkup?</h2>
+                        <p class="text-muted">Select any changes so we can focus your screening evaluation.</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('save_repeat_questionnaire') }}">
+                        <div class="d-grid gap-3 mb-4">
+                            <div class="card p-3 rounded-3 border-2 selection-card" style="cursor: pointer;" onclick="toggleRepeatOption(this, 'symptoms')">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="fs-6 fw-semibold"><i class="bi bi-activity text-danger me-2"></i>My symptoms changed</span>
+                                    <input type="checkbox" name="changes" value="symptoms" class="form-check-input">
+                                </div>
+                            </div>
+
+                            <div class="card p-3 rounded-3 border-2 selection-card" style="cursor: pointer;" onclick="toggleRepeatOption(this, 'diet')">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="fs-6 fw-semibold"><i class="bi bi-egg-fried text-success me-2"></i>My diet changed</span>
+                                    <input type="checkbox" name="changes" value="diet" class="form-check-input">
+                                </div>
+                            </div>
+
+                            <div class="card p-3 rounded-3 border-2 selection-card" style="cursor: pointer;" onclick="toggleRepeatOption(this, 'supplements')">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="fs-6 fw-semibold"><i class="bi bi-capsule text-primary me-2"></i>I started/stopped supplements</span>
+                                    <input type="checkbox" name="changes" value="supplements" class="form-check-input">
+                                </div>
+                            </div>
+
+                            <div class="card p-3 rounded-3 border-2 selection-card" style="cursor: pointer;" onclick="toggleRepeatOption(this, 'blood_test')">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="fs-6 fw-semibold"><i class="bi bi-file-earmark-medical text-info me-2"></i>I had a recent blood test</span>
+                                    <input type="checkbox" name="changes" value="blood_test" class="form-check-input">
+                                </div>
+                            </div>
+
+                            <div class="card p-3 rounded-3 border-2 selection-card" style="cursor: pointer;" onclick="toggleRepeatOption(this, 'nothing', true)">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="fs-6 fw-semibold text-secondary"><i class="bi bi-check-circle me-2"></i>Nothing has changed</span>
+                                    <input type="checkbox" name="changes" value="nothing" id="chk_nothing" class="form-check-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{{ url_for('checkup_select') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                                <i class="bi bi-arrow-left me-1"></i>Back
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-semibold">
+                                Proceed to Visual Checkup <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                {% else %}
+                    <!-- FIRST-TIME BASELINE QUESTIONNAIRE (Single Question per Screen) -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold">
+                                Question <span id="qNumber">1</span> of 6
+                            </span>
+                            <span class="text-muted small fw-medium" id="qPercent">16% Completed</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div id="qProgressBar" class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: 16%;"></div>
+                        </div>
+                    </div>
+
+                    <form id="baselineForm" method="POST" action="{{ url_for('save_baseline_questionnaire') }}">
+                        
+                        <!-- Q1: Tiredness -->
+                        <div class="q-step active" id="qstep1">
+                            <h3 class="fw-bold text-dark mb-2">Have you experienced unusual tiredness recently?</h3>
+                            <p class="text-muted small mb-4">Fatigue can be an early indicator of nutritional or oxygen-carrying deficiencies.</p>
+                            
+                            <div class="d-grid gap-3 mb-4">
+                                <input type="hidden" name="tiredness" id="input_tiredness" value="">
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('tiredness', 'Never', this)">
+                                    <span class="fs-6">Never</span>
+                                </div>
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('tiredness', 'Sometimes', this)">
+                                    <span class="fs-6">Sometimes</span>
+                                </div>
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('tiredness', 'Often', this)">
+                                    <span class="fs-6">Often</span>
+                                </div>
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('tiredness', 'Very often', this)">
+                                    <span class="fs-6">Very often</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Q2: Visual Changes -->
+                        <div class="q-step d-none" id="qstep2">
+                            <h3 class="fw-bold text-dark mb-2">Have you noticed any recent changes in your eyes, tongue, or nails?</h3>
+                            <p class="text-muted small mb-4">Observational features like eye pallor or tongue texture provide valuable indicators.</p>
+                            
+                            <div class="d-grid gap-3 mb-4">
+                                <input type="hidden" name="visual_changes" id="input_visual_changes" value="">
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('visual_changes', 'No', this)">
+                                    <span class="fs-6">No</span>
+                                </div>
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('visual_changes', 'Yes', this)">
+                                    <span class="fs-6">Yes</span>
+                                </div>
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('visual_changes', 'Not sure', this)">
+                                    <span class="fs-6">Not sure</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Q3: Supplements -->
+                        <div class="q-step d-none" id="qstep3">
+                            <h3 class="fw-bold text-dark mb-2">Are you currently taking vitamins or supplements?</h3>
+                            <p class="text-muted small mb-4">Iron, Vitamin D, or B-complex supplementation helps contextualize screening risks.</p>
+                            
+                            <div class="d-grid gap-3 mb-4">
+                                <input type="hidden" name="supplements" id="input_supplements" value="">
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('supplements', 'No', this)">
+                                    <span class="fs-6">No</span>
+                                </div>
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('supplements', 'Yes', this)">
+                                    <span class="fs-6">Yes</span>
+                                </div>
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('supplements', 'Prefer not to say', this)">
+                                    <span class="fs-6">Prefer not to say</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Q4: Blood Test -->
+                        <div class="q-step d-none" id="qstep4">
+                            <h3 class="fw-bold text-dark mb-2">Have you had a blood test recently?</h3>
+                            <p class="text-muted small mb-4">Recent laboratory reports can be integrated into your preliminary assessment.</p>
+                            
+                            <div class="d-grid gap-3 mb-4">
+                                <input type="hidden" name="recent_blood_test" id="input_recent_blood_test" value="">
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('recent_blood_test', 'No', this)">
+                                    <span class="fs-6">No</span>
+                                </div>
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('recent_blood_test', 'Yes', this)">
+                                    <span class="fs-6">Yes</span>
+                                </div>
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('recent_blood_test', 'Not sure', this)">
+                                    <span class="fs-6">Not sure</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Q5: Diet Changes -->
+                        <div class="q-step d-none" id="qstep5">
+                            <h3 class="fw-bold text-dark mb-2">Have there been any recent changes in your diet or general health?</h3>
+                            <p class="text-muted small mb-4">Dietary shifts impact nutrient intake and screening markers.</p>
+                            
+                            <div class="d-grid gap-3 mb-4">
+                                <input type="hidden" name="health_changes" id="input_health_changes" value="">
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('health_changes', 'No', this)">
+                                    <span class="fs-6">No</span>
+                                </div>
+                                <div class="card p-3 rounded-3 option-card" onclick="selectQOption('health_changes', 'Yes', this)">
+                                    <span class="fs-6">Yes</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Q6: Optional Notes -->
+                        <div class="q-step d-none" id="qstep6">
+                            <h3 class="fw-bold text-dark mb-2">Is there anything else you'd like to mention? (Optional)</h3>
+                            <p class="text-muted small mb-4">Share any specific symptoms or health observations for your screening summary.</p>
+                            
+                            <div class="mb-4">
+                                <textarea name="additional_notes" id="input_notes" class="form-control" rows="4" placeholder="e.g., Minor dizziness in the mornings..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 invisible" id="qPrevBtn" onclick="prevQStep()">
+                                <i class="bi bi-arrow-left me-1"></i>Previous
+                            </button>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-link text-muted me-2" id="qSkipBtn" onclick="skipQStep()">Skip</button>
+                                <button type="button" class="btn btn-primary rounded-pill px-5 fw-semibold" id="qNextBtn" onclick="nextQStep()">
+                                    Next <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+                {% endif %}
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentQStep = 1;
+    const totalQSteps = 6;
+
+    function updateQUI() {
+        for (let i = 1; i <= totalQSteps; i++) {
+            const el = document.getElementById('qstep' + i);
+            if (el) {
+                if (i === currentQStep) {
+                    el.classList.remove('d-none');
+                } else {
+                    el.classList.add('d-none');
+                }
+            }
+        }
+
+        const qNum = document.getElementById('qNumber');
+        if (qNum) qNum.innerText = currentQStep;
+
+        const percent = Math.round((currentQStep / totalQSteps) * 100);
+        const qPerc = document.getElementById('qPercent');
+        if (qPerc) qPerc.innerText = percent + '% Completed';
+
+        const qBar = document.getElementById('qProgressBar');
+        if (qBar) qBar.style.width = percent + '%';
+
+        const prevBtn = document.getElementById('qPrevBtn');
+        if (prevBtn) {
+            if (currentQStep === 1) prevBtn.classList.add('invisible');
+            else prevBtn.classList.remove('invisible');
+        }
+
+        const nextBtn = document.getElementById('qNextBtn');
+        if (nextBtn) {
+            if (currentQStep === totalQSteps) {
+                nextBtn.innerHTML = 'Complete Intake <i class="bi bi-check2-circle ms-1"></i>';
+                nextBtn.classList.remove('btn-primary');
+                nextBtn.classList.add('btn-success');
+            } else {
+                nextBtn.innerHTML = 'Next <i class="bi bi-arrow-right ms-1"></i>';
+                nextBtn.classList.remove('btn-success');
+                nextBtn.classList.add('btn-primary');
+            }
+        }
+    }
+
+    function selectQOption(field, val, cardEl) {
+        document.getElementById('input_' + field).value = val;
+        const parent = cardEl.closest('.q-step');
+        parent.querySelectorAll('.option-card').forEach(c => c.classList.remove('border-primary', 'bg-primary-subtle', 'fw-bold'));
+        cardEl.classList.add('border-primary', 'bg-primary-subtle', 'fw-bold');
+    }
+
+    function nextQStep() {
+        if (currentQStep < totalQSteps) {
+            currentQStep++;
+            updateQUI();
+        } else {
+            document.getElementById('baselineForm').submit();
+        }
+    }
+
+    function prevQStep() {
+        if (currentQStep > 1) {
+            currentQStep--;
+            updateQUI();
+        }
+    }
+
+    function skipQStep() {
+        nextQStep();
+    }
+
+    function toggleRepeatOption(cardEl, val, isNothing = false) {
+        const chk = cardEl.querySelector('input[type="checkbox"]');
+        chk.checked = !chk.checked;
+        if (chk.checked) {
+            cardEl.classList.add('border-primary', 'bg-primary-subtle');
+        } else {
+            cardEl.classList.remove('border-primary', 'bg-primary-subtle');
+        }
+
+        if (isNothing && chk.checked) {
+            document.querySelectorAll('.selection-card').forEach(c => {
+                const innerChk = c.querySelector('input[type="checkbox"]');
+                if (innerChk !== chk) {
+                    innerChk.checked = false;
+                    c.classList.remove('border-primary', 'bg-primary-subtle');
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

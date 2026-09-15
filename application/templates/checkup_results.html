@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Screening Results - VitaSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    
+    <!-- Header Banner -->
+    <div class="card shadow-sm border-0 rounded-4 bg-white p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold">
+                        <i class="bi bi-check-circle-fill me-1"></i>Screening Completed
+                    </span>
+                    <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ report.created_at }}</span>
+                </div>
+                <h2 class="fw-bold text-dark mb-1">{{ report.title }}</h2>
+                <p class="text-muted mb-0">Preliminary multimodal risk synthesis based on your observational, intake, and laboratory data.</p>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('download_report_pdf', report_id=report.id) }}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold">
+                    <i class="bi bi-file-earmark-pdf-fill me-2"></i>Download PDF Report
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Risk Breakdown Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-primary-subtle text-primary p-3">
+                        <i class="bi bi-egg-fried fs-4"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Nutritional Category</span>
+                        <h5 class="fw-bold mb-0 {% if 'Higher' in report.nutrition_risk %}text-danger{% elif 'Moderate' in report.nutrition_risk %}text-warning{% else %}text-success{% endif %}">
+                            {{ report.nutrition_risk }}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-info-subtle text-info p-3">
+                        <i class="bi bi-activity fs-4"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Metabolic Category</span>
+                        <h5 class="fw-bold mb-0 {% if 'Higher' in report.metabolic_risk %}text-danger{% elif 'Moderate' in report.metabolic_risk %}text-warning{% else %}text-success{% endif %}">
+                            {{ report.metabolic_risk }}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-secondary-subtle text-secondary p-3">
+                        <i class="bi bi-shield-check fs-4"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">General Risk Profile</span>
+                        <h5 class="fw-bold mb-0 {% if 'Higher' in report.general_risk %}text-danger{% elif 'Moderate' in report.general_risk %}text-warning{% else %}text-success{% endif %}">
+                            {{ report.general_risk }}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Box -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+        <h5 class="fw-bold text-dark mb-2"><i class="bi bi-card-text text-primary me-2"></i>Executive Summary</h5>
+        <p class="text-secondary mb-0" style="line-height: 1.7;">{{ report.summary }}</p>
+    </div>
+
+    <!-- Individual Selected Module Results Grid -->
+    <h4 class="fw-bold text-dark mb-3"><i class="bi bi-journal-medical text-primary me-2"></i>Selected Screening Module Details</h4>
+    
+    <div class="row g-4 mb-4">
+        {% if module_results %}
+            {% for mod in module_results %}
+            <div class="col-12 col-md-6">
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <!-- Module Header & Risk Badge -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="fw-bold text-dark mb-1">{{ mod.title }}</h5>
+                                <span class="text-muted small">Screening Area</span>
+                            </div>
+                            <span class="badge {% if 'Higher' in mod.category %}bg-danger-subtle text-danger{% elif 'Moderate' in mod.category %}bg-warning-subtle text-warning{% else %}bg-success-subtle text-success{% endif %} px-3 py-2 rounded-pill fw-bold">
+                                {{ mod.category }}
+                            </span>
+                        </div>
+
+                        <!-- Progress Bar Score -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between text-muted small mb-1">
+                                <span>Estimated Score</span>
+                                <span class="fw-bold text-dark">{{ mod.score }}%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar {% if mod.score >= 60 %}bg-danger{% elif mod.score >= 35 %}bg-warning{% else %}bg-success{% endif %} rounded-pill" 
+                                     role="progressbar" 
+                                     style="width: {{ mod.score }}%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Factors Evaluated -->
+                        <div class="bg-light rounded-3 p-3 mb-3">
+                            <h6 class="fw-bold small text-dark mb-2"><i class="bi bi-search me-1 text-primary"></i>Evaluated Indicators</h6>
+                            <ul class="list-unstyled small text-muted mb-0 d-grid gap-1">
+                                <li><strong>Visual Observation:</strong> {{ mod.visual_summary }}</li>
+                                <li><strong>Questionnaire Intake:</strong> {{ mod.questionnaire_summary }}</li>
+                                {% if mod.lab_findings %}
+                                <li><strong>Lab Findings:</strong> {{ mod.lab_findings }}</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <!-- Recommendations -->
+                        <div class="border-top pt-3">
+                            <h6 class="fw-bold small text-dark mb-2"><i class="bi bi-lightbulb text-warning me-1"></i>Next Steps & Recommendations</h6>
+                            <p class="text-secondary small mb-0">{{ mod.recommendations }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 text-center">
+                    <p class="text-muted mb-0">General screening evaluation stored.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Action Bar -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4 text-center">
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="{{ url_for('download_report_pdf', report_id=report.id) }}" class="btn btn-primary btn-lg rounded-pill px-5 fw-semibold shadow-sm">
+                <i class="bi bi-file-earmark-pdf-fill me-2"></i>Download PDF Report
+            </a>
+            <a href="{{ url_for('reports') }}" class="btn btn-outline-primary btn-lg rounded-pill px-4">
+                <i class="bi bi-folder2-open me-2"></i>View All Reports
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
+                <i class="bi bi-house me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Non-Diagnostic Medical Disclaimer Banner -->
+    <div class="alert alert-warning border-0 shadow-sm rounded-4 p-4 mb-0 text-dark">
+        <div class="d-flex align-items-start gap-3">
+            <i class="bi bi-exclamation-triangle-fill fs-3 text-warning"></i>
+            <div>
+                <h6 class="fw-bold mb-1">Important Non-Diagnostic Medical Disclaimer</h6>
+                <p class="small text-secondary mb-0">
+                    VitaSense is an AI-assisted preliminary health-screening platform. This assessment provides initial screening indications and is <strong>not a medical diagnosis</strong>. Never disregard professional medical advice or delay in seeking it because of something you have read on this application. Please consult a qualified healthcare professional for formal diagnosis and treatment.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

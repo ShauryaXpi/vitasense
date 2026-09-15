@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Health Reports - HealthAI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+
+            <!-- Breadcrumb / Header -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                <div>
+                    <h3 class="fw-bold mb-1"><i class="bi bi-file-earmark-medical text-primary me-2"></i>Health Reports</h3>
+                    <p class="text-muted mb-0">Review preliminary health screenings and risk assessments.</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('screening') }}" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-plus-circle me-1"></i>New Checkup
+                    </a>
+                </div>
+            </div>
+
+            {% if single_report %}
+                <!-- Single Report Detail View -->
+                <div class="card shadow-sm border-0 rounded-4 bg-white mb-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+                                Report #{{ single_report.id }}
+                            </span>
+                            <span class="text-muted small"><i class="bi bi-calendar me-1"></i>{{ single_report.created_at }}</span>
+                        </div>
+                        <h4 class="fw-bold mt-2">{{ single_report.title }}</h4>
+                        <p class="text-muted small">{{ single_report.screening_type }}</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light border-0 p-3 rounded-3">
+                                    <span class="text-muted small fw-semibold text-uppercase">Nutrition Risk</span>
+                                    <h5 class="fw-bold text-dark mt-2 mb-0">{{ single_report.nutrition_risk }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light border-0 p-3 rounded-3">
+                                    <span class="text-muted small fw-semibold text-uppercase">Metabolic Risk</span>
+                                    <h5 class="fw-bold text-dark mt-2 mb-0">{{ single_report.metabolic_risk }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light border-0 p-3 rounded-3">
+                                    <span class="text-muted small fw-semibold text-uppercase">General Health</span>
+                                    <h5 class="fw-bold text-dark mt-2 mb-0">{{ single_report.general_risk }}</h5>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold text-dark mb-2">Screening Summary</h6>
+                        <p class="text-secondary bg-light p-3 rounded-3 mb-4">
+                            {{ single_report.summary if single_report.summary else "Preliminary screening complete across all evaluated biometric and observational indicators." }}
+                        </p>
+
+                        <div class="alert alert-light border rounded-3 text-muted small mb-0">
+                            <i class="bi bi-info-circle me-1"></i><strong>Notice:</strong> This report is a preliminary screening assessment and does not constitute a definitive medical diagnosis. Consult a qualified healthcare professional for medical advice.
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-4 px-4 pt-0 d-flex flex-wrap gap-2">
+                        <a href="{{ url_for('checkup_results', report_id=single_report.id) }}" class="btn btn-primary rounded-pill px-4">
+                            <i class="bi bi-eye-fill me-1"></i>View Full Results Breakdown
+                        </a>
+                        {% if single_report.pdf_path %}
+                        <a href="{{ url_for('download_report_pdf', report_id=single_report.id) }}" class="btn btn-outline-primary rounded-pill px-4">
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i>Download PDF
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('reports') }}" class="btn btn-outline-secondary rounded-pill px-4 ms-auto">
+                            <i class="bi bi-arrow-left me-1"></i>Back to All Reports
+                        </a>
+                    </div>
+                </div>
+
+            {% elif reports and reports|length > 0 %}
+                <!-- List of All Reports -->
+                <div class="row g-3 mb-4">
+                    {% for r in reports %}
+                        <div class="col-12">
+                            <div class="card shadow-sm border-0 rounded-4 bg-white p-4">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="text-muted small"><i class="bi bi-calendar-event me-1"></i>{{ r.created_at }}</span>
+                                            <span class="badge bg-light text-secondary border px-2 py-1 rounded-pill small">{{ r.category_count }} areas screened</span>
+                                            {% if r.has_lab_report %}
+                                                <span class="badge bg-info-subtle text-info rounded-pill small"><i class="bi bi-file-earmark-check me-1"></i>Lab Attached</span>
+                                            {% endif %}
+                                        </div>
+                                        <h5 class="fw-bold text-dark mb-2">{{ r.title }}</h5>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <span class="badge bg-{{ 'warning-subtle text-warning' if 'Moderate' in r.nutrition_risk else 'success-subtle text-success' }} px-2 py-1 rounded-pill">
+                                                Nutrition: {{ r.nutrition_risk }}
+                                            </span>
+                                            <span class="badge bg-{{ 'warning-subtle text-warning' if 'Moderate' in r.metabolic_risk else 'success-subtle text-success' }} px-2 py-1 rounded-pill">
+                                                Metabolic: {{ r.metabolic_risk }}
+                                            </span>
+                                            <span class="badge bg-{{ 'warning-subtle text-warning' if 'Moderate' in r.general_risk else 'success-subtle text-success' }} px-2 py-1 rounded-pill">
+                                                General: {{ r.general_risk }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ url_for('checkup_results', report_id=r.id) }}" class="btn btn-outline-primary rounded-pill px-3">
+                                            <i class="bi bi-eye me-1"></i>View Details
+                                        </a>
+                                        {% if r.pdf_path %}
+                                        <a href="{{ url_for('download_report_pdf', report_id=r.id) }}" class="btn btn-primary rounded-pill px-3">
+                                            <i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+                <!-- Empty State -->
+                <div class="card shadow-sm border-0 rounded-4 bg-white text-center p-5">
+                    <div class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center mb-3 mx-auto" style="width: 70px; height: 70px; font-size: 2rem;">
+                        <i class="bi bi-folder2-open"></i>
+                    </div>
+                    <h4 class="fw-bold">No health reports yet</h4>
+                    <p class="text-muted col-md-6 mx-auto mb-4">Complete your first screening to generate your preliminary health risk report.</p>
+                    <div>
+                        <a href="{{ url_for('screening') }}" class="btn btn-primary btn-lg rounded-pill px-5">
+                            Start Your First Checkup <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

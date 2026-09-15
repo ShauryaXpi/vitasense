@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Visual Health Checkup - VitaSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+
+            <div class="card shadow-sm border-0 rounded-4 bg-white p-4 p-md-5">
+                
+                <div class="text-center mb-4">
+                    <span class="badge bg-info-subtle text-info px-3 py-2 rounded-pill fw-bold mb-2">
+                        <i class="bi bi-camera me-1"></i>Step 3: Visual Health Checkup
+                    </span>
+                    <h2 class="fw-bold text-dark">Visual Image Capture</h2>
+                    <p class="text-muted small">We'll use a few images as one part of your preliminary screening assessment.</p>
+                </div>
+
+                <form id="visualForm" method="POST" action="{{ url_for('save_visual_checkup') }}" enctype="multipart/form-data">
+                    
+                    <!-- STEP 1: EYES / CONJUNCTIVA -->
+                    <div class="card bg-light border-0 rounded-4 p-4 mb-4" id="box_eyes">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="rounded-circle bg-primary-subtle text-primary p-3">
+                                <i class="bi bi-eye-fill fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">1. Eyes & Conjunctiva</h5>
+                                <span class="text-muted small">Capture a clear photo of your eyes/palpebral conjunctiva in good lighting.</span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-white border rounded-3 small text-muted mb-3">
+                            <i class="bi bi-info-circle me-1 text-primary"></i><strong>Tips for best quality:</strong> Ensure bright natural light, keep camera steady, and keep image in sharp focus.
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <input type="file" name="eye_image" id="eye_file" class="form-control" accept="image/*" onchange="handleImagePreview(this, 'eye_preview', 'eye_quality_err')">
+                        </div>
+
+                        <!-- Image Preview & Quality Check Alert -->
+                        <div id="eye_preview_container" class="mt-3 d-none text-center">
+                            <img id="eye_preview" src="" alt="Eye Preview" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-height: 200px;">
+                            <div class="d-flex justify-content-center gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeImage('eye_file', 'eye_preview_container', 'eye_quality_err')">
+                                    <i class="bi bi-trash me-1"></i>Remove / Retake
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="invalid-feedback d-none mt-2" id="eye_quality_err">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>We couldn't get a clear enough image. Please ensure good lighting and upload a clear, focused photo.
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: TONGUE -->
+                    <div class="card bg-light border-0 rounded-4 p-4 mb-4" id="box_tongue">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="rounded-circle bg-danger-subtle text-danger p-3">
+                                <i class="bi bi-emoji-smile-fill fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">2. Tongue Surface</h5>
+                                <span class="text-muted small">Capture a clear image of your tongue surface for papillary atrophy check.</span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <input type="file" name="tongue_image" id="tongue_file" class="form-control" accept="image/*" onchange="handleImagePreview(this, 'tongue_preview', 'tongue_quality_err')">
+                        </div>
+
+                        <!-- Image Preview & Quality Check -->
+                        <div id="tongue_preview_container" class="mt-3 d-none text-center">
+                            <img id="tongue_preview" src="" alt="Tongue Preview" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-height: 200px;">
+                            <div class="d-flex justify-content-center gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeImage('tongue_file', 'tongue_preview_container', 'tongue_quality_err')">
+                                    <i class="bi bi-trash me-1"></i>Remove / Retake
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="invalid-feedback d-none mt-2" id="tongue_quality_err">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Image quality insufficient. Please retake photo with sharp focus.
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: NAILS / KNUCKLES -->
+                    <div class="card bg-light border-0 rounded-4 p-4 mb-4" id="box_nails">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="rounded-circle bg-warning-subtle text-warning p-3">
+                                <i class="bi bi-hand-index-thumb-fill fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">3. Nails or Knuckles</h5>
+                                <span class="text-muted small">Capture a clear photo of your fingernails or knuckles.</span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <input type="file" name="nail_image" id="nail_file" class="form-control" accept="image/*" onchange="handleImagePreview(this, 'nail_preview', 'nail_quality_err')">
+                        </div>
+
+                        <!-- Image Preview & Quality Check -->
+                        <div id="nail_preview_container" class="mt-3 d-none text-center">
+                            <img id="nail_preview" src="" alt="Nails Preview" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-height: 200px;">
+                            <div class="d-flex justify-content-center gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeImage('nail_file', 'nail_preview_container', 'nail_quality_err')">
+                                    <i class="bi bi-trash me-1"></i>Remove / Retake
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="invalid-feedback d-none mt-2" id="nail_quality_err">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Image quality insufficient. Please upload a clear photo.
+                        </div>
+                    </div>
+
+                    <!-- Navigation Footer -->
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a href="{{ url_for('checkup_questionnaire') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="bi bi-arrow-left me-1"></i>Back
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-semibold" id="visualSubmitBtn">
+                            Continue to Lab Intake <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function handleImagePreview(inputEl, previewImgId, errId) {
+        const file = inputEl.files[0];
+        const errEl = document.getElementById(errId);
+        const previewContainer = document.getElementById(previewImgId + '_container');
+        const previewImg = document.getElementById(previewImgId);
+
+        if (!file) return;
+
+        // Basic Quality Conditions Check: File size > 5KB, valid image type
+        if (file.size < 5000 || !file.type.startsWith('image/')) {
+            errEl.innerText = "We couldn't get a clear enough image. Please retake photo with better resolution.";
+            errEl.classList.remove('d-none');
+            previewContainer.classList.add('d-none');
+            inputEl.value = '';
+            return;
+        }
+
+        errEl.classList.add('d-none');
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewContainer.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removeImage(inputId, containerId, errId) {
+        document.getElementById(inputId).value = '';
+        document.getElementById(containerId).classList.add('d-none');
+        document.getElementById(errId).classList.add('d-none');
+    }
+</script>
+{% endblock %}

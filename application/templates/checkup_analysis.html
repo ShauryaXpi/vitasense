@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Analyzing Screening Data - VitaSense{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6 text-center">
+
+            <div class="card shadow-sm border-0 rounded-4 bg-white p-4 p-md-5">
+                
+                <!-- Animated Spinner -->
+                <div class="mb-4">
+                    <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;" role="status">
+                        <span class="visually-hidden">Analyzing...</span>
+                    </div>
+                </div>
+
+                <h3 class="fw-bold text-dark mb-2">Analyzing your screening information...</h3>
+                <p class="text-muted small mb-4">Our multimodal risk engine is synthesizing your visual features, health intake responses, and biomarker data.</p>
+
+                <!-- Animated Progress Stages List -->
+                <div class="card bg-light border-0 rounded-3 p-3 text-start col-11 mx-auto mb-4">
+                    <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <span class="fw-semibold">Images processed</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <span class="fw-semibold">Questionnaire reviewed</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <span class="fw-semibold">Laboratory information processed</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <span class="fw-semibold">Screening factors evaluated</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 py-2 text-primary">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="fw-semibold">Preparing your results...</span>
+                    </div>
+                </div>
+
+                <!-- Form to trigger calculation completion -->
+                <form id="calcForm" method="POST" action="{{ url_for('compute_analysis_results') }}">
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-semibold d-none" id="calcBtn">
+                        View Results
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(function() {
+            document.getElementById('calcForm').submit();
+        }, 2200);
+    });
+</script>
+{% endblock %}

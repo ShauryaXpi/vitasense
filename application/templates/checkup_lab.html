@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Lab Report Intake - VitaSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+
+            <div class="card shadow-sm border-0 rounded-4 bg-white p-4 p-md-5">
+                
+                <div class="text-center mb-4">
+                    <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-2">
+                        <i class="bi bi-file-earmark-medical me-1"></i>Step 4: Laboratory Intake (Optional)
+                    </span>
+                    <h2 class="fw-bold text-dark">Do you have a recent lab report?</h2>
+                    <p class="text-muted small">Upload your lab report or enter confirmed biomarker values to refine your risk analysis.</p>
+                </div>
+
+                <form id="labForm" method="POST" action="{{ url_for('save_lab_checkup') }}" enctype="multipart/form-data">
+
+                    <!-- PDF / Image Upload Card -->
+                    <div class="card bg-light border-2 border-dashed rounded-4 p-4 text-center mb-4">
+                        <div class="rounded-circle bg-white shadow-sm p-3 d-inline-flex mx-auto mb-3 text-primary" style="width: 60px; height: 60px;">
+                            <i class="bi bi-cloud-arrow-up fs-3"></i>
+                        </div>
+                        <h6 class="fw-bold">Upload Lab Report File</h6>
+                        <p class="text-muted small">Supports PDF or Image reports (PNG, JPG).</p>
+                        
+                        <div class="col-md-8 mx-auto">
+                            <input type="file" name="lab_file" id="lab_file" class="form-control" accept=".pdf,image/*">
+                        </div>
+                    </div>
+
+                    <div class="text-center position-relative my-4">
+                        <hr>
+                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small fw-semibold">or enter key biomarker values</span>
+                    </div>
+
+                    <!-- Biomarker Value Confirmation Controls -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="hb_input" class="form-label fw-semibold small">Hemoglobin (Hb)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" name="hb_val" id="hb_input" class="form-control" placeholder="e.g. 13.5">
+                                <span class="input-group-text bg-light text-muted">g/dL</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="vitd_input" class="form-label fw-semibold small">Vitamin D (25-OH)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" name="vitd_val" id="vitd_input" class="form-control" placeholder="e.g. 28.0">
+                                <span class="input-group-text bg-light text-muted">ng/mL</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="folate_input" class="form-label fw-semibold small">Serum Folate (B9)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" name="folate_val" id="folate_input" class="form-control" placeholder="e.g. 8.5">
+                                <span class="input-group-text bg-light text-muted">ng/mL</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="tsh_input" class="form-label fw-semibold small">TSH (Thyroid Estimator)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" name="tsh_val" id="tsh_input" class="form-control" placeholder="e.g. 2.1">
+                                <span class="input-group-text bg-light text-muted">mIU/L</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Navigation -->
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a href="{{ url_for('checkup_visual') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="bi bi-arrow-left me-1"></i>Back
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="skip_lab" value="true" class="btn btn-outline-secondary rounded-pill px-4">
+                                Skip for now
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-semibold">
+                                Run Risk Analysis <i class="bi bi-cpu ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
