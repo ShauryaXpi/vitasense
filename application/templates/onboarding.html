@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Intake - VitaSense</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .step-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .step-container.active {
+            display: block;
+            opacity: 1;
+        }
+        .option-card {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border: 2px solid #dee2e6;
+        }
+        .option-card:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9fa;
+        }
+        .option-card.selected {
+            border-color: #0d6efd;
+            background-color: #e7f1ff;
+            color: #0d6efd;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-light d-flex flex-column min-vh-100 justify-content-center py-4">
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6">
+                
+                <!-- Brand Header -->
+                <div class="text-center mb-4">
+                    <img src="{{ url_for('serve_asset', filename='images/applogo.jpg') }}" alt="VitaSense Logo" width="50" height="50" class="rounded-circle mb-2 shadow-sm">
+                    <h5 class="fw-bold text-dark mb-0">VitaSense Health Intake</h5>
+                    <p class="text-muted small">Please answer a few questions to personalize your health screening.</p>
+                </div>
+
+                <!-- Onboarding Card -->
+                <div class="card shadow-sm border-0 rounded-4">
+                    
+                    <!-- Progress Bar Header -->
+                    <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-2 rounded-pill">
+                                Question <span id="stepNumber">1</span> of 5
+                            </span>
+                            <span class="text-muted small fw-medium" id="stepPercent">20% Completed</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div id="progressBar" class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    <!-- Card Body / Form Steps -->
+                    <div class="card-body p-4 p-md-5">
+                        <form id="onboardingForm" method="POST" action="{{ url_for('onboarding') }}">
+
+                            <!-- QUESTION 1: AGE -->
+                            <div class="step-container active" id="step1">
+                                <div class="mb-4">
+                                    <span class="text-primary small fw-bold text-uppercase"><i class="bi bi-calendar-event me-1"></i>Basic Info</span>
+                                    <h3 class="fw-bold mt-1 text-dark">How old are you?</h3>
+                                    <p class="text-muted small">Age helps calculate age-adjusted health screening benchmarks.</p>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="input-group input-group-lg">
+                                        <input type="number" class="form-control text-center fs-2 fw-bold" id="ageInput" name="age" placeholder="e.g. 28" min="1" max="120" step="1" autofocus>
+                                        <span class="input-group-text bg-light text-muted">years</span>
+                                    </div>
+                                    <div class="invalid-feedback d-none" id="ageError">Please enter a valid age between 1 and 120.</div>
+                                </div>
+                            </div>
+
+                            <!-- QUESTION 2: SEX -->
+                            <div class="step-container" id="step2">
+                                <div class="mb-4">
+                                    <span class="text-primary small fw-bold text-uppercase"><i class="bi bi-person me-1"></i>Demographics</span>
+                                    <h3 class="fw-bold mt-1 text-dark">What is your sex?</h3>
+                                    <p class="text-muted small">Used for standard biological screening ranges.</p>
+                                </div>
+                                <div class="d-grid gap-3 mb-3">
+                                    <input type="hidden" name="sex" id="sexInput" value="">
+                                    <div class="card option-card p-3 rounded-3 text-center" onclick="selectOption('sex', 'Male', this)">
+                                        <div class="d-flex align-items-center justify-content-between px-2">
+                                            <span class="fs-5"><i class="bi bi-gender-male me-2"></i>Male</span>
+                                            <i class="bi bi-circle check-icon fs-5 text-muted"></i>
+                                        </div>
+                                    </div>
+                                    <div class="card option-card p-3 rounded-3 text-center" onclick="selectOption('sex', 'Female', this)">
+                                        <div class="d-flex align-items-center justify-content-between px-2">
+                                            <span class="fs-5"><i class="bi bi-gender-female me-2"></i>Female</span>
+                                            <i class="bi bi-circle check-icon fs-5 text-muted"></i>
+                                        </div>
+                                    </div>
+                                    <div class="card option-card p-3 rounded-3 text-center" onclick="selectOption('sex', 'Prefer not to say', this)">
+                                        <div class="d-flex align-items-center justify-content-between px-2">
+                                            <span class="fs-5"><i class="bi bi-shield-check me-2"></i>Prefer not to say</span>
+                                            <i class="bi bi-circle check-icon fs-5 text-muted"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback d-none text-center" id="sexError">Please select an option to continue.</div>
+                            </div>
+
+                            <!-- QUESTION 3: HEIGHT -->
+                            <div class="step-container" id="step3">
+                                <div class="mb-4">
+                                    <span class="text-primary small fw-bold text-uppercase"><i class="bi bi-rulers me-1"></i>Body Measurements</span>
+                                    <h3 class="fw-bold mt-1 text-dark">What is your height?</h3>
+                                    <p class="text-muted small">Choose your preferred unit (cm or feet/inches).</p>
+                                </div>
+
+                                <!-- Unit Toggle -->
+                                <div class="d-flex justify-content-center mb-4">
+                                    <div class="btn-group" role="group" aria-label="Height unit toggle">
+                                        <input type="radio" class="btn-check" name="height_unit" id="heightUnitCm" value="cm" checked onchange="toggleHeightUnit('cm')">
+                                        <label class="btn btn-outline-primary px-4" for="heightUnitCm">Centimeters (cm)</label>
+
+                                        <input type="radio" class="btn-check" name="height_unit" id="heightUnitFt" value="ft/in" onchange="toggleHeightUnit('ft/in')">
+                                        <label class="btn btn-outline-primary px-4" for="heightUnitFt">Feet & Inches (ft / in)</label>
+                                    </div>
+                                </div>
+
+                                <!-- CM Input Mode -->
+                                <div id="heightCmContainer" class="mb-3">
+                                    <div class="input-group input-group-lg">
+                                        <input type="number" class="form-control text-center fs-2 fw-bold" id="heightCmInput" placeholder="e.g. 175" min="30" max="260" step="0.5">
+                                        <span class="input-group-text bg-light text-muted">cm</span>
+                                    </div>
+                                </div>
+
+                                <!-- FT / IN Input Mode -->
+                                <div id="heightFtContainer" class="d-none mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <div class="input-group input-group-lg">
+                                                <input type="number" class="form-control text-center fs-2 fw-bold" id="heightFtInput" placeholder="5" min="1" max="8" step="1">
+                                                <span class="input-group-text bg-light text-muted">ft</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="input-group input-group-lg">
+                                                <input type="number" class="form-control text-center fs-2 fw-bold" id="heightInInput" placeholder="9" min="0" max="11.9" step="0.5">
+                                                <span class="input-group-text bg-light text-muted">in</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden unified value passed to backend -->
+                                <input type="hidden" name="height" id="finalHeight" value="">
+                                <div class="invalid-feedback d-none text-center" id="heightError">Please enter a valid height (e.g. 175 cm or 5 ft 9 in).</div>
+                            </div>
+
+                            <!-- QUESTION 4: WEIGHT -->
+                            <div class="step-container" id="step4">
+                                <div class="mb-4">
+                                    <span class="text-primary small fw-bold text-uppercase"><i class="bi bi-speedometer2 me-1"></i>Body Measurements</span>
+                                    <h3 class="fw-bold mt-1 text-dark">What is your weight?</h3>
+                                    <p class="text-muted small">Choose your preferred unit (kg or lb).</p>
+                                </div>
+
+                                <!-- Unit Toggle -->
+                                <div class="d-flex justify-content-center mb-4">
+                                    <div class="btn-group" role="group" aria-label="Weight unit toggle">
+                                        <input type="radio" class="btn-check" name="weight_unit" id="weightUnitKg" value="kg" checked onchange="toggleWeightUnit('kg')">
+                                        <label class="btn btn-outline-primary px-4" for="weightUnitKg">Kilograms (kg)</label>
+
+                                        <input type="radio" class="btn-check" name="weight_unit" id="weightUnitLb" value="lb" onchange="toggleWeightUnit('lb')">
+                                        <label class="btn btn-outline-primary px-4" for="weightUnitLb">Pounds (lb)</label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="input-group input-group-lg">
+                                        <input type="number" class="form-control text-center fs-2 fw-bold" id="weightInput" name="weight" placeholder="e.g. 70" min="10" max="400" step="0.5">
+                                        <span class="input-group-text bg-light text-muted" id="weightUnitLabel">kg</span>
+                                    </div>
+                                    <div class="invalid-feedback d-none text-center" id="weightError">Please enter a valid weight.</div>
+                                </div>
+                            </div>
+
+                            <!-- QUESTION 5: DIET -->
+                            <div class="step-container" id="step5">
+                                <div class="mb-4">
+                                    <span class="text-primary small fw-bold text-uppercase"><i class="bi bi-egg-fried me-1"></i>Lifestyle</span>
+                                    <h3 class="fw-bold mt-1 text-dark">What best describes your usual diet?</h3>
+                                    <p class="text-muted small">Dietary patterns help contextualize metabolic metrics.</p>
+                                </div>
+                                <div class="d-grid gap-3 mb-3">
+                                    <input type="hidden" name="diet" id="dietInput" value="">
+                                    <div class="card option-card p-3 rounded-3" onclick="selectOption('diet', 'Vegetarian', this)">
+                                        <div class="d-flex align-items-center justify-content-between px-2">
+                                            <span class="fs-5"><i class="bi bi-flower1 me-2 text-success"></i>Vegetarian</span>
+                                            <i class="bi bi-circle check-icon fs-5 text-muted"></i>
+                                        </div>
+                                    </div>
+                                    <div class="card option-card p-3 rounded-3" onclick="selectOption('diet', 'Vegan', this)">
+                                        <div class="d-flex align-items-center justify-content-between px-2">
+                                            <span class="fs-5"><i class="bi bi-tree me-2 text-success"></i>Vegan</span>
+                                            <i class="bi bi-circle check-icon fs-5 text-muted"></i>
+                                        </div>
+                                    </div>
+                                    <div class="card option-card p-3 rounded-3" onclick="selectOption('diet', 'Mixed diet', this)">
+                                        <div class="d-flex align-items-center justify-content-between px-2">
+                                            <span class="fs-5"><i class="bi bi-basket me-2 text-primary"></i>Mixed diet (Omnivore)</span>
+                                            <i class="bi bi-circle check-icon fs-5 text-muted"></i>
+                                        </div>
+                                    </div>
+                                    <div class="card option-card p-3 rounded-3" onclick="selectOption('diet', 'Prefer not to say', this)">
+                                        <div class="d-flex align-items-center justify-content-between px-2">
+                                            <span class="fs-5"><i class="bi bi-shield-check me-2 text-secondary"></i>Prefer not to say</span>
+                                            <i class="bi bi-circle check-icon fs-5 text-muted"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback d-none text-center" id="dietError">Please select your diet to complete onboarding.</div>
+                            </div>
+
+                        </form>
+                    </div>
+
+                    <!-- Card Footer / Navigation Buttons -->
+                    <div class="card-footer bg-white border-0 pb-4 px-4 pt-0 d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-outline-secondary px-4 py-2 invisible" id="prevBtn" onclick="prevStep()">
+                            <i class="bi bi-arrow-left me-1"></i>Previous
+                        </button>
+                        <button type="button" class="btn btn-primary px-5 py-2 fw-semibold" id="nextBtn" onclick="nextStep()">
+                            Next<i class="bi bi-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Footer Note -->
+                <div class="text-center mt-3 text-muted small">
+                    <i class="bi bi-lock me-1"></i>Your information is stored securely and used only for health screening benchmarks.
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        function updateUI() {
+            // Update Step Display
+            document.getElementById('stepNumber').innerText = currentStep;
+            const percent = (currentStep / totalSteps) * 100;
+            document.getElementById('stepPercent').innerText = percent + '% Completed';
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressBar').setAttribute('aria-valuenow', percent);
+
+            // Toggle visibility of step containers
+            for (let i = 1; i <= totalSteps; i++) {
+                const stepEl = document.getElementById('step' + i);
+                if (i === currentStep) {
+                    stepEl.classList.add('active');
+                } else {
+                    stepEl.classList.remove('active');
+                }
+            }
+
+            // Previous Button visibility
+            const prevBtn = document.getElementById('prevBtn');
+            if (currentStep === 1) {
+                prevBtn.classList.add('invisible');
+            } else {
+                prevBtn.classList.remove('invisible');
+            }
+
+            // Next / Complete Button text & style
+            const nextBtn = document.getElementById('nextBtn');
+            if (currentStep === totalSteps) {
+                nextBtn.innerHTML = 'Complete Intake <i class="bi bi-check2-circle ms-1"></i>';
+                nextBtn.classList.remove('btn-primary');
+                nextBtn.classList.add('btn-success');
+            } else {
+                nextBtn.innerHTML = 'Next <i class="bi bi-arrow-right ms-1"></i>';
+                nextBtn.classList.remove('btn-success');
+                nextBtn.classList.add('btn-primary');
+            }
+        }
+
+        function validateCurrentStep() {
+            if (currentStep === 1) {
+                const age = parseInt(document.getElementById('ageInput').value, 10);
+                const err = document.getElementById('ageError');
+                if (isNaN(age) || age < 1 || age > 120) {
+                    err.classList.remove('d-none');
+                    document.getElementById('ageInput').classList.add('is-invalid');
+                    return false;
+                }
+                err.classList.add('d-none');
+                document.getElementById('ageInput').classList.remove('is-invalid');
+                return true;
+            }
+
+            if (currentStep === 2) {
+                const sex = document.getElementById('sexInput').value;
+                const err = document.getElementById('sexError');
+                if (!sex) {
+                    err.classList.remove('d-none');
+                    return false;
+                }
+                err.classList.add('d-none');
+                return true;
+            }
+
+            if (currentStep === 3) {
+                const unit = document.querySelector('input[name="height_unit"]:checked').value;
+                const err = document.getElementById('heightError');
+                let finalVal = 0;
+
+                if (unit === 'cm') {
+                    const cm = parseFloat(document.getElementById('heightCmInput').value);
+                    if (isNaN(cm) || cm < 30 || cm > 260) {
+                        err.classList.remove('d-none');
+                        document.getElementById('heightCmInput').classList.add('is-invalid');
+                        return false;
+                    }
+                    finalVal = cm;
+                    document.getElementById('heightCmInput').classList.remove('is-invalid');
+                } else {
+                    const ft = parseInt(document.getElementById('heightFtInput').value, 10);
+                    const inches = parseFloat(document.getElementById('heightInInput').value || 0);
+                    if (isNaN(ft) || ft < 1 || ft > 8 || isNaN(inches) || inches < 0 || inches >= 12) {
+                        err.classList.remove('d-none');
+                        return false;
+                    }
+                    // store total inches
+                    finalVal = (ft * 12) + inches;
+                }
+                err.classList.add('d-none');
+                document.getElementById('finalHeight').value = finalVal;
+                return true;
+            }
+
+            if (currentStep === 4) {
+                const weight = parseFloat(document.getElementById('weightInput').value);
+                const unit = document.querySelector('input[name="weight_unit"]:checked').value;
+                const err = document.getElementById('weightError');
+                const minW = (unit === 'kg') ? 10 : 22;
+                const maxW = (unit === 'kg') ? 400 : 880;
+
+                if (isNaN(weight) || weight < minW || weight > maxW) {
+                    err.classList.remove('d-none');
+                    document.getElementById('weightInput').classList.add('is-invalid');
+                    return false;
+                }
+                err.classList.add('d-none');
+                document.getElementById('weightInput').classList.remove('is-invalid');
+                return true;
+            }
+
+            if (currentStep === 5) {
+                const diet = document.getElementById('dietInput').value;
+                const err = document.getElementById('dietError');
+                if (!diet) {
+                    err.classList.remove('d-none');
+                    return false;
+                }
+                err.classList.add('d-none');
+                return true;
+            }
+
+            return true;
+        }
+
+        function nextStep() {
+            if (!validateCurrentStep()) return;
+
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateUI();
+            } else {
+                // Submit Form
+                document.getElementById('onboardingForm').submit();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        }
+
+        function selectOption(fieldName, value, cardElement) {
+            document.getElementById(fieldName + 'Input').value = value;
+            
+            // Update selected card styling
+            const container = cardElement.closest('.step-container');
+            container.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('selected');
+                const icon = card.querySelector('.check-icon');
+                if (icon) {
+                    icon.className = 'bi bi-circle check-icon fs-5 text-muted';
+                }
+            });
+
+            cardElement.classList.add('selected');
+            const icon = cardElement.querySelector('.check-icon');
+            if (icon) {
+                icon.className = 'bi bi-check-circle-fill check-icon fs-5 text-primary';
+            }
+
+            // Clear errors
+            const err = document.getElementById(fieldName + 'Error');
+            if (err) err.classList.add('d-none');
+        }
+
+        function toggleHeightUnit(unit) {
+            const cmContainer = document.getElementById('heightCmContainer');
+            const ftContainer = document.getElementById('heightFtContainer');
+            const cmInput = document.getElementById('heightCmInput');
+            const ftInput = document.getElementById('heightFtInput');
+            const inInput = document.getElementById('heightInInput');
+
+            if (unit === 'cm') {
+                cmContainer.classList.remove('d-none');
+                ftContainer.classList.add('d-none');
+                // Convert ft/in to cm if present
+                const ft = parseInt(ftInput.value, 10);
+                const inches = parseFloat(inInput.value || 0);
+                if (!isNaN(ft) && ft > 0) {
+                    const totalInches = (ft * 12) + inches;
+                    cmInput.value = (totalInches * 2.54).toFixed(1);
+                }
+            } else {
+                cmContainer.classList.add('d-none');
+                ftContainer.classList.remove('d-none');
+                // Convert cm to ft/in if present
+                const cm = parseFloat(cmInput.value);
+                if (!isNaN(cm) && cm > 0) {
+                    const totalInches = cm / 2.54;
+                    const ft = Math.floor(totalInches / 12);
+                    const inches = Math.round(totalInches % 12);
+                    ftInput.value = ft;
+                    inInput.value = inches;
+                }
+            }
+        }
+
+        function toggleWeightUnit(unit) {
+            const label = document.getElementById('weightUnitLabel');
+            const input = document.getElementById('weightInput');
+            const val = parseFloat(input.value);
+
+            if (unit === 'kg') {
+                label.innerText = 'kg';
+                input.placeholder = 'e.g. 70';
+                if (!isNaN(val) && val > 0) {
+                    input.value = (val * 0.45359237).toFixed(1);
+                }
+            } else {
+                label.innerText = 'lb';
+                input.placeholder = 'e.g. 154';
+                if (!isNaN(val) && val > 0) {
+                    input.value = (val * 2.20462).toFixed(1);
+                }
+            }
+        }
+
+        // Allow pressing Enter to advance
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                nextStep();
+            }
+        });
+    </script>
+</body>
+</html>
