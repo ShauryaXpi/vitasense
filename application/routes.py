@@ -1072,6 +1072,7 @@ def diet_plan():
         profile=profile,
         personal_health=personal_health,
         latest_report=latest_report,
+        diet=diet_guidance,
         diet_guidance=diet_guidance
     )
 

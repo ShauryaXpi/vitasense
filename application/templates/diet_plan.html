@@ -20,7 +20,7 @@
             </div>
             
             <div>
-                <a href="{{ url_for('download_diet_pdf') }}" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm fw-semibold">
+                <a href="{{ url_for('diet_plan_pdf') }}" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm fw-semibold">
                     <i class="bi bi-file-earmark-pdf-fill me-2"></i>Download Diet Guidance PDF
                 </a>
             </div>
@@ -88,7 +88,7 @@
                     <div class="mb-3">
                         <h6 class="fw-bold text-dark small text-uppercase mb-2"><i class="bi bi-check2-circle text-success me-1"></i>{{ cat.name }}</h6>
                         <ul class="list-group list-group-flush border-0">
-                            {% for item in cat.items %}
+                            {% for item in cat['items'] %}
                             <li class="list-group-item bg-transparent border-0 px-0 py-1 small text-secondary">
                                 <i class="bi bi-dot text-primary me-1 fs-5 align-middle"></i>{{ item }}
                             </li>
