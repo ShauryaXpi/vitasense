@@ -19,12 +19,51 @@
                 <p class="text-muted mb-0">Securely store, organize, and access your medical reports, personal health details, and doctor sharing links.</p>
             </div>
             
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createDoctorShareModal">
+                    <i class="bi bi-hospital me-2"></i>+ Create Doctor Share Link
+                </button>
                 <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
                     <i class="bi bi-file-earmark-plus-fill me-2"></i>Upload Medical Document
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- HEALTH LOCKER SUB-NAVIGATION TABS -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-2 mb-4">
+        <ul class="nav nav-pills nav-fill gap-2 flex-column flex-sm-row" id="lockerSubTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill fw-semibold py-2" id="tab-all-pane" data-bs-toggle="pill" data-bs-target="#pane-all" type="button" role="tab">
+                    <i class="bi bi-grid-fill me-1"></i>All Sections
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-semibold py-2" id="tab-doctor-sharing-pane" data-bs-toggle="pill" data-bs-target="#pane-doctor-sharing" type="button" role="tab">
+                    <i class="bi bi-hospital text-primary me-1"></i>👨‍⚕️ Doctor Sharing
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-semibold py-2" id="tab-personal-info-pane" data-bs-toggle="pill" data-bs-target="#pane-personal-info" type="button" role="tab">
+                    <i class="bi bi-person-vcard text-info me-1"></i>Personal Info
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-semibold py-2" id="tab-medical-reports-pane" data-bs-toggle="pill" data-bs-target="#pane-medical-reports" type="button" role="tab">
+                    <i class="bi bi-folder-fill text-primary me-1"></i>Medical Reports
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-semibold py-2" id="tab-checkup-reports-pane" data-bs-toggle="pill" data-bs-target="#pane-checkup-reports" type="button" role="tab">
+                    <i class="bi bi-journal-medical text-success me-1"></i>Checkup Reports
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-semibold py-2" id="tab-emergency-info-pane" data-bs-toggle="pill" data-bs-target="#pane-emergency-info" type="button" role="tab">
+                    <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>Emergency Info
+                </button>
+            </li>
+        </ul>
     </div>
 
     <!-- SEARCH BAR -->
@@ -40,299 +79,569 @@
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
+    <!-- TAB CONTENT PANES -->
+    <div class="tab-content" id="lockerTabContent">
 
-        <!-- LEFT COLUMN: PERSONAL HEALTH INFO & EMERGENCY INFO -->
-        <div class="col-12 col-lg-5">
-            
-            <!-- 1. PERSONAL HEALTH INFORMATION -->
-            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-vcard text-primary me-2"></i>Personal Health Information</h5>
-                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editHealthInfoModal">
-                        <i class="bi bi-pencil-square me-1"></i>Edit
-                    </button>
-                </div>
-                <div class="row g-3">
-                    <div class="col-6">
-                        <span class="text-muted small d-block">Full Name</span>
-                        <span class="fw-semibold text-dark">{{ personal_health.full_name if personal_health and personal_health.full_name else user.username }}</span>
-                    </div>
-                    <div class="col-6">
-                        <span class="text-muted small d-block">Date of Birth</span>
-                        <span class="fw-semibold text-dark">{{ personal_health.dob if personal_health and personal_health.dob else 'Not set' }}</span>
-                    </div>
-                    <div class="col-6">
-                        <span class="text-muted small d-block">Blood Group</span>
-                        <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill fw-bold fs-6">
-                            {{ personal_health.blood_group if personal_health and personal_health.blood_group else 'Unspecified' }}
-                        </span>
-                    </div>
-                    <div class="col-6">
-                        <span class="text-muted small d-block">Emergency Contact</span>
-                        <span class="fw-semibold text-dark">{{ personal_health.emergency_contact if personal_health and personal_health.emergency_contact else 'Not set' }}</span>
-                    </div>
-                    <div class="col-12">
-                        <hr class="my-2 text-muted">
-                    </div>
-                    <div class="col-12">
-                        <span class="text-muted small d-block">Known Allergies</span>
-                        <span class="text-dark">{{ personal_health.known_allergies if personal_health and personal_health.known_allergies else 'None recorded' }}</span>
-                    </div>
-                    <div class="col-12">
-                        <span class="text-muted small d-block">Medical Conditions</span>
-                        <span class="text-dark">{{ personal_health.medical_conditions if personal_health and personal_health.medical_conditions else 'None recorded' }}</span>
-                    </div>
-                    <div class="col-12">
-                        <span class="text-muted small d-block">Current Medications</span>
-                        <span class="text-dark">{{ personal_health.current_medications if personal_health and personal_health.current_medications else 'None recorded' }}</span>
-                    </div>
-                    <div class="col-12">
-                        <span class="text-muted small d-block">Preferred Hospital / Doctor</span>
-                        <span class="text-dark">{{ personal_health.preferred_hospital_doctor if personal_health and personal_health.preferred_hospital_doctor else 'Not set' }}</span>
-                    </div>
-                </div>
-            </div>
+        <!-- TAB 1: ALL SECTIONS (COMBINED DASHBOARD VIEW) -->
+        <div class="tab-pane fade show active" id="pane-all" role="tabpanel">
+            <div class="row g-4 mb-4">
 
-            <!-- 4. EMERGENCY ACCESS -->
-            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4 border-start border-4 border-danger">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <span class="badge bg-danger p-2 rounded-circle text-white"><i class="bi bi-exclamation-triangle-fill"></i></span>
-                    <h5 class="fw-bold text-dark mb-0">Emergency Access</h5>
-                </div>
-                <p class="text-secondary small mb-3">
-                    Create a temporary, revocable link or QR code to allow emergency first responders to view your selected critical health information.
-                </p>
+                <!-- LEFT COLUMN: PERSONAL HEALTH INFO & EMERGENCY INFO -->
+                <div class="col-12 col-lg-5">
+                    
+                    <!-- 1. PERSONAL HEALTH INFORMATION -->
+                    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-vcard text-primary me-2"></i>Personal Health Information</h5>
+                            <button class="btn btn-outline-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editHealthInfoModal">
+                                <i class="bi bi-pencil-square me-1"></i>Edit
+                            </button>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <span class="text-muted small d-block">Full Name</span>
+                                <span class="fw-semibold text-dark">{{ personal_health.full_name if personal_health and personal_health.full_name else user.username }}</span>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small d-block">Date of Birth</span>
+                                <span class="fw-semibold text-dark">{{ personal_health.dob if personal_health and personal_health.dob else 'Not set' }}</span>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small d-block">Blood Group</span>
+                                <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill fw-bold fs-6">
+                                    {{ personal_health.blood_group if personal_health and personal_health.blood_group else 'Unspecified' }}
+                                </span>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small d-block">Emergency Contact</span>
+                                <span class="fw-semibold text-dark">{{ personal_health.emergency_contact if personal_health and personal_health.emergency_contact else 'Not set' }}</span>
+                            </div>
+                            <div class="col-12">
+                                <hr class="my-2 text-muted">
+                            </div>
+                            <div class="col-12">
+                                <span class="text-muted small d-block">Known Allergies</span>
+                                <span class="text-dark">{{ personal_health.known_allergies if personal_health and personal_health.known_allergies else 'None recorded' }}</span>
+                            </div>
+                            <div class="col-12">
+                                <span class="text-muted small d-block">Medical Conditions</span>
+                                <span class="text-dark">{{ personal_health.medical_conditions if personal_health and personal_health.medical_conditions else 'None recorded' }}</span>
+                            </div>
+                            <div class="col-12">
+                                <span class="text-muted small d-block">Current Medications</span>
+                                <span class="text-dark">{{ personal_health.current_medications if personal_health and personal_health.current_medications else 'None recorded' }}</span>
+                            </div>
+                            <div class="col-12">
+                                <span class="text-muted small d-block">Preferred Hospital / Doctor</span>
+                                <span class="text-dark">{{ personal_health.preferred_hospital_doctor if personal_health and personal_health.preferred_hospital_doctor else 'Not set' }}</span>
+                            </div>
+                        </div>
+                    </div>
 
-                <!-- Action Buttons -->
-                <div class="d-flex flex-column gap-2 mb-3">
-                    <button type="button" class="btn btn-outline-danger fw-semibold rounded-pill w-100" data-bs-toggle="modal" data-bs-target="#emergencyShareModal">
-                        <i class="bi bi-qr-code-scan me-2"></i>Generate Emergency QR & Link
-                    </button>
-                    {% if active_emergency_share %}
-                    <form action="{{ url_for('revoke_emergency_access') }}" method="POST" class="w-100">
-                        <button type="submit" class="btn btn-light text-danger border rounded-pill w-100 fw-semibold">
-                            <i class="bi bi-slash-circle me-2"></i>Revoke Emergency Access
-                        </button>
-                    </form>
+                    <!-- 4. EMERGENCY ACCESS -->
+                    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4 border-start border-4 border-danger">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="badge bg-danger p-2 rounded-circle text-white"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                            <h5 class="fw-bold text-dark mb-0">Emergency Access</h5>
+                        </div>
+                        <p class="text-secondary small mb-3">
+                            Create a temporary, revocable link or QR code to allow emergency first responders to view your selected critical health information.
+                        </p>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            <button type="button" class="btn btn-outline-danger fw-semibold rounded-pill w-100" data-bs-toggle="modal" data-bs-target="#emergencyShareModal">
+                                <i class="bi bi-qr-code-scan me-2"></i>Generate Emergency QR & Link
+                            </button>
+                            {% if active_emergency_share %}
+                            <form action="{{ url_for('revoke_emergency_access') }}" method="POST" class="w-100">
+                                <button type="submit" class="btn btn-light text-danger border rounded-pill w-100 fw-semibold">
+                                    <i class="bi bi-slash-circle me-2"></i>Revoke Emergency Access
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+
+                        {% if active_emergency_share %}
+                        <div class="p-3 bg-light rounded-3 border">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-success-subtle text-success fw-bold rounded-pill"><i class="bi bi-check-circle-fill me-1"></i>Active Emergency Link</span>
+                                <span class="text-muted small">Token: {{ active_emergency_share.token[:8] }}...</span>
+                            </div>
+                            <div class="input-group input-group-sm mb-2">
+                                <input type="text" class="form-control" id="activeEmergencyLinkInput" value="{{ request.host_url.rstrip('/') + url_for('view_emergency_access', token=active_emergency_share.token) }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyEmergencyLink()">Copy</button>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-secondary mb-0 small text-muted text-center rounded-3">
+                            <i class="bi bi-info-circle me-1"></i>No active emergency share link. Click above to generate one.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN: DOCTOR SHARING, MEDICAL DOCUMENTS & CHECKUP REPORTS -->
+                <div class="col-12 col-lg-7">
+
+                    <!-- 5. DOCTOR SHARING SECTION -->
+                    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4 border-start border-4 border-primary">
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-3">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 fw-bold">
+                                        <i class="bi bi-hospital me-1"></i>Doctor Sharing
+                                    </span>
+                                    <span class="text-muted small">Patient-Controlled Access</span>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-1">👨‍⚕️ Doctor Sharing</h5>
+                                <p class="text-secondary small mb-0">Share selected health information with your doctor securely. Create a temporary secure link that allows your doctor to view the health information you choose to share. You can revoke access at any time.</p>
+                            </div>
+                            <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#createDoctorShareModal">
+                                <i class="bi bi-plus-lg me-1"></i>Create Doctor Share Link
+                            </button>
+                        </div>
+
+                        <!-- ACTIVE SHARES LIST -->
+                        <h6 class="fw-bold text-dark mt-3 mb-2"><i class="bi bi-link-45deg text-primary me-1"></i>Active Doctor Shares</h6>
+                        {% if active_doctor_shares %}
+                            <div class="d-flex flex-column gap-3 mb-3">
+                                {% for share in active_doctor_shares %}
+                                <div class="p-3 bg-light rounded-4 border">
+                                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-2">
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small fw-bold">
+                                                    <i class="bi bi-check-circle-fill me-1"></i>Active Link
+                                                </span>
+                                                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1 small">
+                                                    {{ share.shared_count }} item{% if share.shared_count != 1 %}s{% endif %} shared
+                                                </span>
+                                            </div>
+                                            <div class="small text-muted mb-1">
+                                                <i class="bi bi-calendar3 me-1"></i>Created: {{ share.created_at }} | <i class="bi bi-clock me-1"></i>Expires: <strong class="text-danger">{{ share.formatted_expires }}</strong>
+                                            </div>
+                                            {% if share.last_accessed_at %}
+                                            <div class="small text-secondary">
+                                                <i class="bi bi-eye me-1"></i>Last accessed: <strong>{{ share.last_accessed_at }}</strong>
+                                            </div>
+                                            {% else %}
+                                            <div class="small text-muted fst-italic">
+                                                <i class="bi bi-eye-slash me-1"></i>Not accessed by doctor yet
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <a href="{{ url_for('view_doctor_share', token=share.token) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                                <i class="bi bi-eye me-1"></i>View Details
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="copyDoctorLink('{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}')">
+                                                <i class="bi bi-clipboard me-1"></i>Copy Link
+                                            </button>
+                                            <form action="{{ url_for('revoke_doctor_share', share_id=share.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to revoke this doctor\'s access?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                    <i class="bi bi-slash-circle me-1"></i>Revoke
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <div class="input-group input-group-sm mt-2">
+                                        <input type="text" class="form-control" value="{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyDoctorLink('{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}')">Copy</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-light border rounded-3 small text-muted mb-3 text-center">
+                                <i class="bi bi-info-circle me-1"></i>No active doctor share links. Click <strong>"Create Doctor Share Link"</strong> above to generate one.
+                            </div>
+                        {% endif %}
+
+                        <!-- EXPIRED SHARES AUDIT -->
+                        {% if expired_doctor_shares %}
+                            <a class="text-decoration-none small text-muted d-inline-flex align-items-center gap-1" data-bs-toggle="collapse" href="#expiredSharesCollapse" role="button" aria-expanded="false">
+                                <i class="bi bi-clock-history me-1"></i>View Expired Doctor Shares ({{ expired_doctor_shares|length }}) <i class="bi bi-chevron-down"></i>
+                            </a>
+                            <div class="collapse mt-2" id="expiredSharesCollapse">
+                                <div class="d-flex flex-column gap-2">
+                                    {% for share in expired_doctor_shares %}
+                                    <div class="p-2 bg-light rounded-3 border text-muted small d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="badge bg-secondary rounded-pill me-1">Expired / Revoked</span>
+                                            <span>Created: {{ share.created_at }}</span>
+                                        </div>
+                                        <span class="fst-italic text-secondary">Token: {{ share.token[:8] }}...</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- 2. MEDICAL REPORTS (UPLOADS) -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-folder-fill text-primary me-2"></i>Medical Reports & Documents</h5>
+                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">{{ documents|length }} Document{% if documents|length != 1 %}s{% endif %}</span>
+                    </div>
+
+                    {% if documents %}
+                        <div class="row g-3 mb-4" id="medicalDocsContainer">
+                            {% for doc in documents %}
+                            <div class="col-12 col-md-6 doc-card-item" data-name="{{ doc.doc_name|lower }}" data-type="{{ doc.doc_type|lower }}" data-date="{{ doc.upload_date|lower }}">
+                                <div class="card border-0 shadow-sm rounded-4 bg-white p-3 h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 text-truncate" style="max-width: 140px;">
+                                                <i class="bi bi-tag-fill me-1"></i>{{ doc.doc_type }}
+                                            </span>
+                                            <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ doc.upload_date }}</span>
+                                        </div>
+                                        <h6 class="fw-bold text-dark mb-1 text-truncate" title="{{ doc.doc_name }}">{{ doc.doc_name }}</h6>
+                                        <p class="text-muted small mb-3 text-truncate">{{ doc.file_name }}</p>
+                                    </div>
+                                    <div class="d-flex gap-2 pt-2 border-top">
+                                        <a href="{{ url_for('view_medical_document', doc_id=doc.id) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill flex-grow-1">
+                                            <i class="bi bi-eye me-1"></i>View
+                                        </a>
+                                        <a href="{{ url_for('download_medical_document', doc_id=doc.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1">
+                                            <i class="bi bi-download me-1"></i>Download
+                                        </a>
+                                        <form action="{{ url_for('delete_medical_document', doc_id=doc.id) }}" method="POST" onsubmit="return confirm('Delete this medical document?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- EMPTY STATE -->
+                        <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center mb-4" id="docsEmptyState">
+                            <div class="rounded-circle bg-primary-subtle text-primary p-4 d-inline-flex mx-auto mb-3">
+                                <i class="bi bi-folder-symlink-fill fs-1"></i>
+                            </div>
+                            <h5 class="fw-bold text-dark mb-2">Your Health Locker is empty</h5>
+                            <p class="text-secondary max-width-500 mx-auto mb-4" style="max-width: 440px;">
+                                Store your important medical reports and health information here for easy access when you need them.
+                            </p>
+                            <div>
+                                <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
+                                    <i class="bi bi-cloud-upload-fill me-2"></i>Upload Your First Report
+                                </button>
+                            </div>
+                        </div>
                     {% endif %}
+
+                    <!-- 3. HEALTH CHECKUP REPORTS (VITASENSE GENERATED) -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 pt-2">
+                        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-journal-medical text-primary me-2"></i>VitaSense Screening Reports</h5>
+                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">{{ reports|length }} Screening{% if reports|length != 1 %}s{% endif %}</span>
+                    </div>
+
+                    {% if reports %}
+                        <div class="d-flex flex-column gap-3 mb-4" id="checkupReportsContainer">
+                            {% for rep in reports %}
+                            <div class="card border-0 shadow-sm rounded-4 bg-white p-3 checkup-card-item" data-title="{{ rep.title|lower }}" data-date="{{ rep.created_at|lower }}" data-type="{{ rep.screening_type|lower }}">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small fw-bold">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Checkup Complete
+                                            </span>
+                                            <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ rep.created_at }}</span>
+                                        </div>
+                                        <h6 class="fw-bold text-dark mb-1">{{ rep.title }}</h6>
+                                        <p class="text-muted small mb-0">{{ rep.screening_type }}</p>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ url_for('view_report_results', report_id=rep.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                            <i class="bi bi-file-earmark-text me-1"></i>View Results
+                                        </a>
+                                        {% if rep.pdf_path %}
+                                        <a href="{{ url_for('download_report_pdf', report_id=rep.id) }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                            <i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="card border-0 shadow-sm rounded-4 bg-white p-4 text-center mb-4">
+                            <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>No VitaSense screening reports generated yet. Start a checkup from Home!</p>
+                        </div>
+                    {% endif %}
+
                 </div>
 
-                {% if active_emergency_share %}
-                <div class="p-3 bg-light rounded-3 border">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge bg-success-subtle text-success fw-bold rounded-pill"><i class="bi bi-check-circle-fill me-1"></i>Active Emergency Link</span>
-                        <span class="text-muted small">Token: {{ active_emergency_share.token[:8] }}...</span>
-                    </div>
-                    <div class="input-group input-group-sm mb-2">
-                        <input type="text" class="form-control" id="activeEmergencyLinkInput" value="{{ request.host_url.rstrip('/') + url_for('view_emergency_access', token=active_emergency_share.token) }}" readonly>
-                        <button class="btn btn-outline-secondary" type="button" onclick="copyEmergencyLink()">Copy</button>
-                    </div>
-                </div>
-                {% else %}
-                <div class="alert alert-secondary mb-0 small text-muted text-center rounded-3">
-                    <i class="bi bi-info-circle me-1"></i>No active emergency share link. Click above to generate one.
-                </div>
-                {% endif %}
             </div>
-
         </div>
 
-        <!-- RIGHT COLUMN: DOCTOR SHARING, MEDICAL DOCUMENTS & CHECKUP REPORTS -->
-        <div class="col-12 col-lg-7">
-
-            <!-- 5. DOCTOR SHARING SECTION -->
-            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4 border-start border-4 border-primary">
-                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-3">
+        <!-- TAB 2: DEDICATED DOCTOR SHARING TAB -->
+        <div class="tab-pane fade" id="pane-doctor-sharing" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
                     <div>
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 fw-bold">
-                                <i class="bi bi-hospital me-1"></i>Doctor Sharing
-                            </span>
-                            <span class="text-muted small">Patient-Controlled Access</span>
-                        </div>
-                        <h5 class="fw-bold text-dark mb-1">👨‍⚕️ Doctor Sharing</h5>
-                        <p class="text-secondary small mb-0">Share selected health information with your doctor securely. Create a temporary secure link that allows your doctor to view the health information you choose to share. You can revoke access at any time.</p>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 fw-bold mb-2">
+                            <i class="bi bi-hospital me-1"></i>Doctor Sharing Management
+                        </span>
+                        <h3 class="fw-bold text-dark mb-1">👨‍⚕️ Doctor Sharing</h3>
+                        <p class="text-muted mb-0">Share selected health information with your doctor securely. Create temporary secure links with custom permissions and duration.</p>
                     </div>
-                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#createDoctorShareModal">
-                        <i class="bi bi-plus-lg me-1"></i>Create Doctor Share Link
+                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createDoctorShareModal">
+                        <i class="bi bi-plus-lg me-1"></i>+ Create Doctor Share Link
                     </button>
                 </div>
 
-                <!-- ACTIVE SHARES LIST -->
-                <h6 class="fw-bold text-dark mt-3 mb-2"><i class="bi bi-link-45deg text-primary me-1"></i>Active Doctor Shares</h6>
+                <!-- ACTIVE SHARES IN DEDICATED TAB -->
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-link-45deg text-primary me-2"></i>Active Doctor Share Links</h5>
                 {% if active_doctor_shares %}
-                    <div class="d-flex flex-column gap-3 mb-3">
+                    <div class="row g-3 mb-4">
                         {% for share in active_doctor_shares %}
-                        <div class="p-3 bg-light rounded-4 border">
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-2">
+                        <div class="col-12 col-md-6">
+                            <div class="card border border-primary-subtle rounded-4 p-4 bg-white shadow-sm h-100 d-flex flex-column justify-content-between">
                                 <div>
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                        <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small fw-bold">
-                                            <i class="bi bi-check-circle-fill me-1"></i>Active Link
-                                        </span>
-                                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1 small">
-                                            {{ share.shared_count }} item{% if share.shared_count != 1 %}s{% endif %} shared
-                                        </span>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1 fw-bold">Active Link</span>
+                                        <span class="badge bg-light text-secondary rounded-pill px-3 py-1">{{ share.shared_count }} items shared</span>
                                     </div>
-                                    <div class="small text-muted mb-1">
-                                        <i class="bi bi-calendar3 me-1"></i>Created: {{ share.created_at }} | <i class="bi bi-clock me-1"></i>Expires: <strong class="text-danger">{{ share.formatted_expires }}</strong>
+                                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-shield-check text-primary me-1"></i>Doctor Access Token</h6>
+                                    <div class="small text-muted mb-2">
+                                        <div><i class="bi bi-calendar3 me-1"></i>Created: <strong>{{ share.created_at }}</strong></div>
+                                        <div><i class="bi bi-clock me-1"></i>Expires: <strong class="text-danger">{{ share.formatted_expires }}</strong></div>
                                     </div>
                                     {% if share.last_accessed_at %}
-                                    <div class="small text-secondary">
-                                        <i class="bi bi-eye me-1"></i>Last accessed: <strong>{{ share.last_accessed_at }}</strong>
+                                    <div class="small text-success mb-3">
+                                        <i class="bi bi-eye-fill me-1"></i>Last accessed: <strong>{{ share.last_accessed_at }}</strong>
                                     </div>
                                     {% else %}
-                                    <div class="small text-muted fst-italic">
+                                    <div class="small text-muted fst-italic mb-3">
                                         <i class="bi bi-eye-slash me-1"></i>Not accessed by doctor yet
                                     </div>
                                     {% endif %}
+                                    <div class="input-group input-group-sm mb-3">
+                                        <input type="text" class="form-control" value="{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyDoctorLink('{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}')">Copy</button>
+                                    </div>
                                 </div>
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <a href="{{ url_for('view_doctor_share', token=share.token) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('view_doctor_share', token=share.token) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill flex-grow-1">
                                         <i class="bi bi-eye me-1"></i>View Details
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="copyDoctorLink('{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}')">
-                                        <i class="bi bi-clipboard me-1"></i>Copy Link
-                                    </button>
-                                    <form action="{{ url_for('revoke_doctor_share', share_id=share.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to revoke this doctor\'s access?');">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                    <form action="{{ url_for('revoke_doctor_share', share_id=share.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to revoke this doctor\'s access?');" class="flex-grow-1">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill w-100">
                                             <i class="bi bi-slash-circle me-1"></i>Revoke
                                         </button>
                                     </form>
                                 </div>
                             </div>
-                            <div class="input-group input-group-sm mt-2">
-                                <input type="text" class="form-control" value="{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}" readonly>
-                                <button class="btn btn-outline-secondary" type="button" onclick="copyDoctorLink('{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}')">Copy</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="card border-0 bg-light rounded-4 p-5 text-center mb-4">
+                        <div class="rounded-circle bg-primary-subtle text-primary p-3 d-inline-flex mx-auto mb-3">
+                            <i class="bi bi-hospital fs-1"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">No Active Doctor Shares</h5>
+                        <p class="text-secondary max-width-440 mx-auto mb-4" style="max-width: 440px;">
+                            Create a temporary secure link to share your selected medical reports, health conditions, or checkups with your doctor.
+                        </p>
+                        <div>
+                            <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createDoctorShareModal">
+                                <i class="bi bi-plus-lg me-1"></i>Create Doctor Share Link
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- EXPIRED SHARES LIST IN DEDICATED TAB -->
+                {% if expired_doctor_shares %}
+                <h6 class="fw-bold text-dark mt-4 mb-2"><i class="bi bi-clock-history text-secondary me-1"></i>Expired Share History</h6>
+                <div class="d-flex flex-column gap-2">
+                    {% for share in expired_doctor_shares %}
+                    <div class="p-3 bg-light rounded-3 border text-muted small d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-secondary rounded-pill me-2">Expired / Revoked</span>
+                            <span>Created: {{ share.created_at }}</span>
+                        </div>
+                        <span class="fst-italic text-secondary">Token: {{ share.token[:8] }}...</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- TAB 3: PERSONAL INFO DEDICATED TAB -->
+        <div class="tab-pane fade" id="pane-personal-info" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold text-dark mb-1"><i class="bi bi-person-vcard text-primary me-2"></i>Personal Health Information</h4>
+                        <p class="text-muted small mb-0">Your fundamental health record profile details.</p>
+                    </div>
+                    <button class="btn btn-outline-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#editHealthInfoModal">
+                        <i class="bi bi-pencil-square me-1"></i>Edit Information
+                    </button>
+                </div>
+                <div class="row g-4">
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <span class="text-muted small d-block mb-1">Full Name</span>
+                            <span class="fw-bold text-dark fs-5">{{ personal_health.full_name if personal_health and personal_health.full_name else user.username }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <span class="text-muted small d-block mb-1">Date of Birth</span>
+                            <span class="fw-bold text-dark fs-5">{{ personal_health.dob if personal_health and personal_health.dob else 'Not set' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 bg-danger-subtle text-danger rounded-3 border border-danger-subtle">
+                            <span class="text-uppercase small fw-bold d-block">Blood Group</span>
+                            <span class="fw-bold fs-4">{{ personal_health.blood_group if personal_health and personal_health.blood_group else 'Unspecified' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 bg-primary-subtle text-primary rounded-3 border border-primary-subtle">
+                            <span class="text-uppercase small fw-bold d-block">Emergency Contact</span>
+                            <span class="fw-bold fs-5">{{ personal_health.emergency_contact if personal_health and personal_health.emergency_contact else 'Not set' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 bg-light rounded-3">
+                            <span class="text-muted small d-block mb-1">Known Allergies</span>
+                            <span class="text-dark fs-6">{{ personal_health.known_allergies if personal_health and personal_health.known_allergies else 'None recorded' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 bg-light rounded-3">
+                            <span class="text-muted small d-block mb-1">Medical Conditions</span>
+                            <span class="text-dark fs-6">{{ personal_health.medical_conditions if personal_health and personal_health.medical_conditions else 'None recorded' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 bg-light rounded-3">
+                            <span class="text-muted small d-block mb-1">Current Medications</span>
+                            <span class="text-dark fs-6">{{ personal_health.current_medications if personal_health and personal_health.current_medications else 'None recorded' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: MEDICAL REPORTS DEDICATED TAB -->
+        <div class="tab-pane fade" id="pane-medical-reports" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold text-dark mb-1"><i class="bi bi-folder-fill text-primary me-2"></i>Uploaded Medical Reports</h4>
+                        <p class="text-muted small mb-0">Manage blood tests, CBCs, prescriptions, and lab documents.</p>
+                    </div>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
+                        <i class="bi bi-file-earmark-plus-fill me-2"></i>Upload Document
+                    </button>
+                </div>
+
+                {% if documents %}
+                    <div class="row g-3">
+                        {% for doc in documents %}
+                        <div class="col-12 col-md-6">
+                            <div class="p-3 bg-light rounded-4 border h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 mb-2">{{ doc.doc_type }}</span>
+                                    <h6 class="fw-bold text-dark mb-1">{{ doc.doc_name }}</h6>
+                                    <p class="text-muted small mb-3">Uploaded: {{ doc.upload_date }}</p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('view_medical_document', doc_id=doc.id) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill flex-grow-1">
+                                        <i class="bi bi-eye me-1"></i>View
+                                    </a>
+                                    <a href="{{ url_for('download_medical_document', doc_id=doc.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1">
+                                        <i class="bi bi-download me-1"></i>Download
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="alert alert-light border rounded-3 small text-muted mb-3 text-center">
-                        <i class="bi bi-info-circle me-1"></i>No active doctor share links. Click <strong>"Create Doctor Share Link"</strong> above to generate one.
+                    <div class="p-5 text-center text-muted">
+                        <p class="mb-0">No uploaded documents yet. Click "Upload Document" to add one.</p>
                     </div>
                 {% endif %}
+            </div>
+        </div>
 
-                <!-- EXPIRED SHARES AUDIT -->
-                {% if expired_doctor_shares %}
-                    <a class="text-decoration-none small text-muted d-inline-flex align-items-center gap-1" data-bs-toggle="collapse" href="#expiredSharesCollapse" role="button" aria-expanded="false">
-                        <i class="bi bi-clock-history me-1"></i>View Expired Doctor Shares ({{ expired_doctor_shares|length }}) <i class="bi bi-chevron-down"></i>
-                    </a>
-                    <div class="collapse mt-2" id="expiredSharesCollapse">
-                        <div class="d-flex flex-column gap-2">
-                            {% for share in expired_doctor_shares %}
-                            <div class="p-2 bg-light rounded-3 border text-muted small d-flex justify-content-between align-items-center">
+        <!-- TAB 5: CHECKUP REPORTS DEDICATED TAB -->
+        <div class="tab-pane fade" id="pane-checkup-reports" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+                <h4 class="fw-bold text-dark mb-3"><i class="bi bi-journal-medical text-primary me-2"></i>VitaSense Checkup Reports</h4>
+                {% if reports %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for rep in reports %}
+                        <div class="p-3 bg-light rounded-4 border">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                                 <div>
-                                    <span class="badge bg-secondary rounded-pill me-1">Expired / Revoked</span>
-                                    <span>Created: {{ share.created_at }}</span>
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small fw-bold mb-1">Checkup Complete</span>
+                                    <h6 class="fw-bold text-dark mb-1">{{ rep.title }}</h6>
+                                    <p class="text-muted small mb-0"><i class="bi bi-calendar3 me-1"></i>{{ rep.created_at }} — {{ rep.screening_type }}</p>
                                 </div>
-                                <span class="fst-italic text-secondary">Token: {{ share.token[:8] }}...</span>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('view_report_results', report_id=rep.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View Results</a>
+                                    {% if rep.pdf_path %}
+                                    <a href="{{ url_for('download_report_pdf', report_id=rep.id) }}" class="btn btn-sm btn-primary rounded-pill px-3">PDF Report</a>
+                                    {% endif %}
+                                </div>
                             </div>
-                            {% endfor %}
                         </div>
+                        {% endfor %}
                     </div>
+                {% else %}
+                    <p class="text-muted mb-0">No checkup reports generated yet.</p>
                 {% endif %}
             </div>
+        </div>
 
-            <!-- 2. MEDICAL REPORTS (UPLOADS) -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-folder-fill text-primary me-2"></i>Medical Reports & Documents</h5>
-                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">{{ documents|length }} Document{% if documents|length != 1 %}s{% endif %}</span>
+        <!-- TAB 6: EMERGENCY INFO DEDICATED TAB -->
+        <div class="tab-pane fade" id="pane-emergency-info" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4 border-start border-4 border-danger">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold text-dark mb-0"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Emergency Information & Access</h4>
+                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#emergencyShareModal">
+                        Generate Emergency Link
+                    </button>
+                </div>
+                <p class="text-secondary small mb-4">Emergency first responders can access your selected emergency profile using temporary QR codes or shareable links.</p>
+
+                {% if active_emergency_share %}
+                <div class="p-4 bg-light rounded-4 border mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-success-subtle text-success fw-bold rounded-pill"><i class="bi bi-check-circle-fill me-1"></i>Active Emergency Link</span>
+                        <span class="text-muted small">Token: {{ active_emergency_share.token }}</span>
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="activeEmergencyLinkInput2" value="{{ request.host_url.rstrip('/') + url_for('view_emergency_access', token=active_emergency_share.token) }}" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyEmergencyLink()">Copy Link</button>
+                    </div>
+                    <form action="{{ url_for('revoke_emergency_access') }}" method="POST">
+                        <button type="submit" class="btn btn-outline-danger rounded-pill px-4 fw-semibold">Revoke Emergency Access</button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="alert alert-secondary mb-0 text-center rounded-3">
+                    No active emergency share link. Click above to generate one.
+                </div>
+                {% endif %}
             </div>
-
-            {% if documents %}
-                <div class="row g-3 mb-4" id="medicalDocsContainer">
-                    {% for doc in documents %}
-                    <div class="col-12 col-md-6 doc-card-item" data-name="{{ doc.doc_name|lower }}" data-type="{{ doc.doc_type|lower }}" data-date="{{ doc.upload_date|lower }}">
-                        <div class="card border-0 shadow-sm rounded-4 bg-white p-3 h-100 d-flex flex-column justify-content-between">
-                            <div>
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 text-truncate" style="max-width: 140px;">
-                                        <i class="bi bi-tag-fill me-1"></i>{{ doc.doc_type }}
-                                    </span>
-                                    <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ doc.upload_date }}</span>
-                                </div>
-                                <h6 class="fw-bold text-dark mb-1 text-truncate" title="{{ doc.doc_name }}">{{ doc.doc_name }}</h6>
-                                <p class="text-muted small mb-3 text-truncate">{{ doc.file_name }}</p>
-                            </div>
-                            <div class="d-flex gap-2 pt-2 border-top">
-                                <a href="{{ url_for('view_medical_document', doc_id=doc.id) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill flex-grow-1">
-                                    <i class="bi bi-eye me-1"></i>View
-                                </a>
-                                <a href="{{ url_for('download_medical_document', doc_id=doc.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1">
-                                    <i class="bi bi-download me-1"></i>Download
-                                </a>
-                                <form action="{{ url_for('delete_medical_document', doc_id=doc.id) }}" method="POST" onsubmit="return confirm('Delete this medical document?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <!-- EMPTY STATE -->
-                <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center mb-4" id="docsEmptyState">
-                    <div class="rounded-circle bg-primary-subtle text-primary p-4 d-inline-flex mx-auto mb-3">
-                        <i class="bi bi-folder-symlink-fill fs-1"></i>
-                    </div>
-                    <h5 class="fw-bold text-dark mb-2">Your Health Locker is empty</h5>
-                    <p class="text-secondary max-width-500 mx-auto mb-4" style="max-width: 440px;">
-                        Store your important medical reports and health information here for easy access when you need them.
-                    </p>
-                    <div>
-                        <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
-                            <i class="bi bi-cloud-upload-fill me-2"></i>Upload Your First Report
-                        </button>
-                    </div>
-                </div>
-            {% endif %}
-
-            <!-- 3. HEALTH CHECKUP REPORTS (VITASENSE GENERATED) -->
-            <div class="d-flex justify-content-between align-items-center mb-3 pt-2">
-                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-journal-medical text-primary me-2"></i>VitaSense Screening Reports</h5>
-                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">{{ reports|length }} Screening{% if reports|length != 1 %}s{% endif %}</span>
-            </div>
-
-            {% if reports %}
-                <div class="d-flex flex-column gap-3 mb-4" id="checkupReportsContainer">
-                    {% for rep in reports %}
-                    <div class="card border-0 shadow-sm rounded-4 bg-white p-3 checkup-card-item" data-title="{{ rep.title|lower }}" data-date="{{ rep.created_at|lower }}" data-type="{{ rep.screening_type|lower }}">
-                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                            <div>
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small fw-bold">
-                                        <i class="bi bi-check-circle-fill me-1"></i>Checkup Complete
-                                    </span>
-                                    <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ rep.created_at }}</span>
-                                </div>
-                                <h6 class="fw-bold text-dark mb-1">{{ rep.title }}</h6>
-                                <p class="text-muted small mb-0">{{ rep.screening_type }}</p>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <a href="{{ url_for('view_report_results', report_id=rep.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                    <i class="bi bi-file-earmark-text me-1"></i>View Results
-                                </a>
-                                {% if rep.pdf_path %}
-                                <a href="{{ url_for('download_report_pdf', report_id=rep.id) }}" class="btn btn-sm btn-primary rounded-pill px-3">
-                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 text-center mb-4">
-                    <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>No VitaSense screening reports generated yet. Start a checkup from Home!</p>
-                </div>
-            {% endif %}
-
         </div>
 
     </div>
@@ -751,17 +1060,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     durationRadios.forEach(radio => {
         radio.addEventListener('change', function() {
-            if (customRadio.checked) {
+            if (customRadio && customRadio.checked) {
                 customBox.style.display = 'block';
-            } else {
+            } else if (customBox) {
                 customBox.style.display = 'none';
             }
         });
     });
+
+    // Auto-switch to doctor sharing tab if URL hash is #doctor-sharing
+    if (window.location.hash === '#doctor-sharing' || window.location.hash === '#doctor-share') {
+        const docTabBtn = document.getElementById('tab-doctor-sharing-pane');
+        if (docTabBtn) {
+            docTabBtn.click();
+        }
+    }
 });
 
 function copyEmergencyLink() {
-    const copyText = document.getElementById('activeEmergencyLinkInput');
+    const copyText = document.getElementById('activeEmergencyLinkInput') || document.getElementById('activeEmergencyLinkInput2');
     if (copyText) {
         copyText.select();
         copyText.setSelectionRange(0, 99999);
