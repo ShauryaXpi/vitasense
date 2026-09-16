@@ -1044,6 +1044,11 @@ def download_shared_doctor_document(token, doc_id):
 
     return send_from_directory(os.path.dirname(full_path), os.path.basename(full_path), as_attachment=True, download_name=doc.file_name)
 
+@app.route('/doctor-sharing')
+@login_required
+def doctor_sharing():
+    return redirect(url_for('health_locker') + '#doctor-sharing')
+
 @app.route('/diet-plan')
 @login_required
 def diet_plan():

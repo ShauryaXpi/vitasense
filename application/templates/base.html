@@ -59,7 +59,7 @@
                 
                 {% if current_user.is_authenticated %}
                     <!-- Center: Main Navigation (Only for Logged-In Users) -->
-                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-3">
+                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-2">
                         <li class="nav-item">
                             <a class="nav-link text-secondary {{ 'active fw-bold' if request.endpoint == 'index' else '' }}" href="{{ url_for('index') }}">
                                 <i class="bi bi-house-door me-1"></i>Home
@@ -68,6 +68,16 @@
                         <li class="nav-item">
                             <a class="nav-link text-secondary {{ 'active fw-bold' if request.endpoint == 'health_locker' else '' }}" href="{{ url_for('health_locker') }}">
                                 <i class="bi bi-lock-fill me-1"></i>Health Locker
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-secondary {{ 'active fw-bold' if request.endpoint == 'doctor_sharing' else '' }}" href="{{ url_for('doctor_sharing') }}">
+                                <i class="bi bi-hospital me-1"></i>Doctor Sharing
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-secondary {{ 'active fw-bold' if request.endpoint == 'diet_plan' else '' }}" href="{{ url_for('diet_plan') }}">
+                                <i class="bi bi-egg-fried me-1"></i>Diet Plan
                             </a>
                         </li>
                         <li class="nav-item">
