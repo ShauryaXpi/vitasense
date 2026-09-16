@@ -1,6 +1,7 @@
 /**
  * VitaSense Multilingual i18n Translation Engine
  * Supports: English (en), Hindi (hi), Tamil (ta)
+ * Translates the ENTIRE web application DOM seamlessly across all pages.
  */
 
 const translations = {
@@ -13,7 +14,6 @@ const translations = {
         nav_reports: "Reports",
         nav_health_history: "Health History",
         nav_sign_out: "Sign Out",
-        nav_signed_in_as: "Signed in as",
         
         // General UI & Badges
         lang_english: "English",
@@ -69,7 +69,6 @@ const translations = {
         nav_reports: "रिपोर्ट्स",
         nav_health_history: "स्वास्थ्य इतिहास",
         nav_sign_out: "साइन आउट",
-        nav_signed_in_as: "के रूप में लॉग इन किया गया",
         
         // General UI & Badges
         lang_english: "English",
@@ -125,7 +124,6 @@ const translations = {
         nav_reports: "அறிக்கைகள்",
         nav_health_history: "சுகாதார வரலாறு",
         nav_sign_out: "வெளியேறு",
-        nav_signed_in_as: "உள்நுழைந்துள்ளார்",
         
         // General UI & Badges
         lang_english: "English",
@@ -180,9 +178,24 @@ function getLanguage() {
 
 function setLanguage(lang) {
     if (!translations[lang]) return;
+    const prevLang = getLanguage();
     localStorage.setItem('vitasense_lang', lang);
-    applyTranslations(lang);
+    
+    // Set Google Translate Cookie
+    document.cookie = "googtrans=/en/" + lang + "; path=/;";
+    document.cookie = "googtrans=/en/" + lang + "; domain=" + window.location.hostname + "; path=/;";
+    
     updateLangDropdownUI(lang);
+    applyTranslations(lang);
+    
+    // Trigger Google Translate widget if present
+    const select = document.querySelector('.goog-te-combo');
+    if (select) {
+        select.value = lang;
+        select.dispatchEvent(new Event('change'));
+    } else if (prevLang !== lang) {
+        location.reload();
+    }
 }
 
 function updateLangDropdownUI(lang) {
@@ -200,6 +213,7 @@ function updateLangDropdownUI(lang) {
 function applyTranslations(lang) {
     const dict = translations[lang] || translations['en'];
     
+    // Translate all elements with data-i18n
     const elements = document.querySelectorAll('[data-i18n]');
     elements.forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -223,5 +237,12 @@ function applyTranslations(lang) {
 document.addEventListener('DOMContentLoaded', () => {
     const currentLang = getLanguage();
     updateLangDropdownUI(currentLang);
+    
+    // Ensure google translate cookies align with stored preference
+    if (currentLang !== 'en') {
+        document.cookie = "googtrans=/en/" + currentLang + "; path=/;";
+        document.cookie = "googtrans=/en/" + currentLang + "; domain=" + window.location.hostname + "; path=/;";
+    }
+    
     applyTranslations(currentLang);
 });
