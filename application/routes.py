@@ -7,6 +7,8 @@ from flask import render_template, redirect, url_for, request, session, flash, s
 from flask_login import login_user, logout_user, current_user, login_required
 from application import app, google, Session
 from application.models import User, UserProfile, HealthReport, UserPersonalHealth, MedicalDocument, EmergencyAccessShare, DoctorShare
+from application.diet_engine import generate_diet_guidance
+from application.pdf_generator import generate_diet_pdf
 import time
 
 @app.route('/')
@@ -1041,6 +1043,68 @@ def download_shared_doctor_document(token, doc_id):
         return redirect(url_for('view_doctor_share', token=token))
 
     return send_from_directory(os.path.dirname(full_path), os.path.basename(full_path), as_attachment=True, download_name=doc.file_name)
+
+@app.route('/diet-plan')
+@login_required
+def diet_plan():
+    with Session() as db_session:
+        profile = db_session.query(UserProfile).filter_by(user_id=current_user.id).first()
+        personal_health = db_session.query(UserPersonalHealth).filter_by(user_id=current_user.id).first()
+        reports = db_session.query(HealthReport).filter_by(user_id=current_user.id).order_by(HealthReport.id.desc()).all()
+        if profile:
+            db_session.expunge(profile)
+        if personal_health:
+            db_session.expunge(personal_health)
+        for r in reports:
+            db_session.expunge(r)
+
+    latest_report = reports[0] if reports else None
+    diet_guidance = generate_diet_guidance(current_user, profile, personal_health, latest_report)
+
+    return render_template(
+        'diet_plan.html',
+        user=current_user,
+        profile=profile,
+        personal_health=personal_health,
+        latest_report=latest_report,
+        diet_guidance=diet_guidance
+    )
+
+@app.route('/diet-plan/pdf')
+@login_required
+def diet_plan_pdf():
+    with Session() as db_session:
+        profile = db_session.query(UserProfile).filter_by(user_id=current_user.id).first()
+        personal_health = db_session.query(UserPersonalHealth).filter_by(user_id=current_user.id).first()
+        reports = db_session.query(HealthReport).filter_by(user_id=current_user.id).order_by(HealthReport.id.desc()).all()
+        if profile:
+            db_session.expunge(profile)
+        if personal_health:
+            db_session.expunge(personal_health)
+        for r in reports:
+            db_session.expunge(r)
+
+    latest_report = reports[0] if reports else None
+    diet_guidance = generate_diet_guidance(current_user, profile, personal_health, latest_report)
+
+    pdf_dir = os.path.join(app.root_path, '..', 'reports', 'pdf')
+    os.makedirs(pdf_dir, exist_ok=True)
+    pdf_filename = f"diet_guidance_user_{current_user.id}.pdf"
+    pdf_path = os.path.join(pdf_dir, pdf_filename)
+
+    generate_diet_pdf(
+        output_path=pdf_path,
+        user_name=current_user.username,
+        user_email=current_user.email,
+        diet_guidance=diet_guidance
+    )
+
+    return send_from_directory(
+        pdf_dir,
+        pdf_filename,
+        as_attachment=True,
+        download_name=f"VitaSense_Diet_Guidance_{current_user.username}.pdf"
+    )
 
 @app.route('/logout')
 def logout():

@@ -161,3 +161,124 @@ def generate_screening_pdf(output_path, user_name, user_email, report_data, prof
 
     doc.build(elements)
     return output_path
+
+def generate_diet_pdf(output_path, user_name, user_email, diet_guidance):
+    """
+    Generates a personalized PDF report containing screening-aligned diet and nutrition guidance.
+    """
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    doc = SimpleDocTemplate(
+        output_path,
+        pagesize=letter,
+        rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36
+    )
+
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle(
+        'DocTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=18,
+        leading=22,
+        textColor=colors.HexColor('#0a2540')
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'DocSubtitle',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9.5,
+        leading=13,
+        textColor=colors.HexColor('#6c757d')
+    )
+
+    h2_style = ParagraphStyle(
+        'SectionH2',
+        parent=styles['Heading2'],
+        fontName='Helvetica-Bold',
+        fontSize=12,
+        leading=15,
+        textColor=colors.HexColor('#0d6efd'),
+        spaceBefore=10,
+        spaceAfter=5
+    )
+
+    body_style = ParagraphStyle(
+        'BodyDark',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        leading=12.5,
+        textColor=colors.HexColor('#212529')
+    )
+
+    disclaimer_style = ParagraphStyle(
+        'DisclaimerText',
+        parent=styles['Normal'],
+        fontName='Helvetica-Oblique',
+        fontSize=8,
+        leading=11,
+        textColor=colors.HexColor('#6c757d')
+    )
+
+    elements = []
+
+    # Header Title Banner
+    elements.append(Paragraph("VitaSense — Personalized Diet & Nutrition Guidance", title_style))
+    elements.append(Spacer(1, 4))
+    elements.append(Paragraph(f"<b>Patient:</b> {user_name} ({user_email}) &nbsp;|&nbsp; <b>Date:</b> {diet_guidance.get('latest_date', 'Recent')}", subtitle_style))
+    elements.append(Spacer(1, 8))
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#0d6efd'), spaceAfter=10))
+
+    # Prominent Disclaimer
+    elements.append(Paragraph("<b>Important Notice:</b> " + diet_guidance.get('disclaimer', ''), disclaimer_style))
+    elements.append(Spacer(1, 10))
+
+    # Dietary Profile Details
+    pref_text = f"<b>Dietary Preference:</b> {diet_guidance.get('diet_pref', 'Mixed diet')}"
+    if diet_guidance.get('has_allergies'):
+        pref_text += f" &nbsp;|&nbsp; <b>Known Allergies:</b> {diet_guidance.get('known_allergies')}"
+    elements.append(Paragraph(pref_text, body_style))
+    elements.append(Spacer(1, 8))
+
+    # Guidance Blocks
+    elements.append(Paragraph("Screening-Specific Nutrition Focus", h2_style))
+    for block in diet_guidance.get('guidance_blocks', []):
+        elements.append(Paragraph(f"<b>• {block['title']}</b>", body_style))
+        for cat in block.get('categories', []):
+            items_str = ", ".join(cat['items'])
+            elements.append(Paragraph(f"&nbsp;&nbsp;&nbsp;<b>{cat['name']}:</b> {items_str}", body_style))
+        if block.get('pairing_tip'):
+            elements.append(Paragraph(f"&nbsp;&nbsp;&nbsp;<i>Pairing Tip:</i> {block['pairing_tip']}", body_style))
+        if block.get('clinical_note'):
+            elements.append(Paragraph(f"&nbsp;&nbsp;&nbsp;<i>Clinical Note:</i> {block['clinical_note']}", body_style))
+        elements.append(Spacer(1, 6))
+
+    # Flexible Example Meal Ideas
+    elements.append(Spacer(1, 6))
+    elements.append(Paragraph("Flexible Example Meal Ideas", h2_style))
+    elements.append(Paragraph("<i>Adapt all ideas to your personal food preferences, allergies, and dietary requirements.</i>", subtitle_style))
+    elements.append(Spacer(1, 4))
+    
+    meals = diet_guidance.get('meal_ideas', {})
+    elements.append(Paragraph(f"<b>Breakfast:</b> {'; '.join(meals.get('breakfast', []))}", body_style))
+    elements.append(Paragraph(f"<b>Lunch:</b> {'; '.join(meals.get('lunch', []))}", body_style))
+    elements.append(Paragraph(f"<b>Snack:</b> {'; '.join(meals.get('snack', []))}", body_style))
+    elements.append(Paragraph(f"<b>Dinner:</b> {'; '.join(meals.get('dinner', []))}", body_style))
+    elements.append(Spacer(1, 10))
+
+    # Why am I seeing these suggestions?
+    elements.append(Paragraph("Why am I seeing these suggestions?", h2_style))
+    why_list = diet_guidance.get('why_sources', [])
+    for src in why_list:
+        elements.append(Paragraph(f"✓ {src}", body_style))
+    elements.append(Spacer(1, 12))
+
+    # Footer Disclaimer
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#ced4da'), spaceAfter=6))
+    elements.append(Paragraph("VitaSense Platform — Preliminary screening and general nutrition information tool. Not a medical prescription.", disclaimer_style))
+
+    doc.build(elements)
+    return output_path
+
