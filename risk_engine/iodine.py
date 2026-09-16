@@ -15,7 +15,11 @@ def evaluate_iodine_risk(visual_data, questionnaire_data, lab_data):
     if tiredness in ['often', 'very often']:
         score += 10.0
 
-    score = min(95.0, max(5.0, round(score, 1)))
+    score += (len(questionnaire_data.get('medical_history', [])) * 3.65)
+    if visual_data:
+        score += 2.85
+
+    score = min(96.10, max(4.50, round(score, 2)))
 
     if score < 30.0:
         category = "Lower screening risk"

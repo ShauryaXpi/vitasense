@@ -30,7 +30,14 @@ def evaluate_folate_risk(visual_data, questionnaire_data, lab_data):
         except (ValueError, TypeError):
             pass
 
-    score = min(95.0, max(5.0, round(score, 1)))
+    # Calculate precise decimal risk score (e.g. 34.23%)
+    diet_factors = len(questionnaire_data.get('diet_habits', [])) + len(questionnaire_data.get('medical_history', []))
+    score += (diet_factors * 4.12)
+
+    if visual_data:
+        score += 3.15
+
+    score = min(96.20, max(5.10, round(score, 2)))
 
     if score < 30.0:
         category = "Lower screening risk"

@@ -27,13 +27,13 @@
 
                 <form id="selectForm" method="POST" action="{{ url_for('start_checkup') }}">
                     
-                    <!-- Module Selection Cards Grid -->
-                    <div class="row g-3 mb-4" id="modulesGrid">
+                    <!-- Module Selection Cards List -->
+                    <div class="d-flex flex-column gap-3 mb-4" id="modulesGrid">
                         
                         <!-- ANEMIA -->
-                        <div class="col-12 col-md-6 module-card-wrapper" data-search="anemia low hemoglobin risk iron tiredness fatigue pallor">
-                            <div class="card h-100 p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('anemia', this)">
-                                <div class="d-flex align-items-start justify-content-between">
+                        <div class="col-12 module-card-wrapper" data-search="anemia low hemoglobin risk iron tiredness fatigue pallor">
+                            <div class="card p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('anemia', this)">
+                                <div class="d-flex align-items-center justify-content-between">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-circle bg-danger-subtle text-danger p-3">
                                             <i class="bi bi-droplet-fill fs-4"></i>
@@ -43,16 +43,35 @@
                                             <span class="text-muted small">Visual, tiredness & lab screening</span>
                                         </div>
                                     </div>
-                                    <input type="checkbox" name="modules" value="anemia" id="chk_anemia" class="form-check-input mt-1 fs-5" onclick="event.stopPropagation(); updateSelectionState();">
+                                    <input type="checkbox" name="modules" value="anemia" id="chk_anemia" class="form-check-input fs-5" onclick="event.stopPropagation(); updateSelectionState();">
                                 </div>
-                                <p class="text-secondary small mt-3 mb-0">Evaluates potential risk related to iron levels, tiredness, conjunctival pallor, and hemoglobin biomarkers.</p>
+                                <p class="text-secondary small mt-2 mb-0 ms-5 ps-3">Evaluates potential risk related to iron levels, tiredness, conjunctival pallor, and hemoglobin biomarkers.</p>
+                            </div>
+                        </div>
+
+                        <!-- VITAMIN B12 DEFICIENCY -->
+                        <div class="col-12 module-card-wrapper" data-search="vitamin b12 deficiency risk nerve tingling tiredness memory diet">
+                            <div class="card p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('b12', this)">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle bg-primary-subtle text-primary p-3">
+                                            <i class="bi bi-lightning-charge-fill fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Vitamin B12 Deficiency Risk</h6>
+                                            <span class="text-muted small">Nerve sensation, tongue texture & B12 screening</span>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="modules" value="b12" id="chk_b12" class="form-check-input fs-5" onclick="event.stopPropagation(); updateSelectionState();">
+                                </div>
+                                <p class="text-secondary small mt-2 mb-0 ms-5 ps-3">Screens for cobalamin deficiency, tingling or numbness, tongue papillary changes, and dietary B12 intake.</p>
                             </div>
                         </div>
 
                         <!-- VITAMIN D -->
-                        <div class="col-12 col-md-6 module-card-wrapper" data-search="vitamin d deficiency risk bone sun calcium supplements">
-                            <div class="card h-100 p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('vitamin_d', this)">
-                                <div class="d-flex align-items-start justify-content-between">
+                        <div class="col-12 module-card-wrapper" data-search="vitamin d deficiency risk bone sun calcium supplements">
+                            <div class="card p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('vitamin_d', this)">
+                                <div class="d-flex align-items-center justify-content-between">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-circle bg-warning-subtle text-warning p-3">
                                             <i class="bi bi-sun-fill fs-4"></i>
@@ -62,16 +81,16 @@
                                             <span class="text-muted small">Sun exposure, fatigue & lab intake</span>
                                         </div>
                                     </div>
-                                    <input type="checkbox" name="modules" value="vitamin_d" id="chk_vitamin_d" class="form-check-input mt-1 fs-5" onclick="event.stopPropagation(); updateSelectionState();">
+                                    <input type="checkbox" name="modules" value="vitamin_d" id="chk_vitamin_d" class="form-check-input fs-5" onclick="event.stopPropagation(); updateSelectionState();">
                                 </div>
-                                <p class="text-secondary small mt-3 mb-0">Screens for indicators of low 25-hydroxy Vitamin D associated with low sun exposure and dietary intake.</p>
+                                <p class="text-secondary small mt-2 mb-0 ms-5 ps-3">Screens for indicators of low 25-hydroxy Vitamin D associated with low sun exposure and dietary intake.</p>
                             </div>
                         </div>
 
                         <!-- FOLATE -->
-                        <div class="col-12 col-md-6 module-card-wrapper" data-search="folate deficiency risk b9 vitamin b diet tongue leaf">
-                            <div class="card h-100 p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('folate', this)">
-                                <div class="d-flex align-items-start justify-content-between">
+                        <div class="col-12 module-card-wrapper" data-search="folate deficiency risk b9 vitamin b diet tongue leaf">
+                            <div class="card p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('folate', this)">
+                                <div class="d-flex align-items-center justify-content-between">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-circle bg-success-subtle text-success p-3">
                                             <i class="bi bi-tree-fill fs-4"></i>
@@ -81,28 +100,9 @@
                                             <span class="text-muted small">Dietary pattern & serum folate</span>
                                         </div>
                                     </div>
-                                    <input type="checkbox" name="modules" value="folate" id="chk_folate" class="form-check-input mt-1 fs-5" onclick="event.stopPropagation(); updateSelectionState();">
+                                    <input type="checkbox" name="modules" value="folate" id="chk_folate" class="form-check-input fs-5" onclick="event.stopPropagation(); updateSelectionState();">
                                 </div>
-                                <p class="text-secondary small mt-3 mb-0">Evaluates dietary folate patterns, tongue surface indicators, and serum folate lab values.</p>
-                            </div>
-                        </div>
-
-                        <!-- IODINE -->
-                        <div class="col-12 col-md-6 module-card-wrapper" data-search="iodine deficiency risk thyroid salt diet metabolic">
-                            <div class="card h-100 p-3 rounded-4 border-2 shadow-sm selection-card" style="cursor: pointer;" onclick="toggleModule('iodine', this)">
-                                <div class="d-flex align-items-start justify-content-between">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="rounded-circle bg-info-subtle text-info p-3">
-                                            <i class="bi bi-shield-heart-fill fs-4"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="fw-bold mb-1">Iodine Deficiency Risk</h6>
-                                            <span class="text-muted small">Dietary salt & thyroid intake</span>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" name="modules" value="iodine" id="chk_iodine" class="form-check-input mt-1 fs-5" onclick="event.stopPropagation(); updateSelectionState();">
-                                </div>
-                                <p class="text-secondary small mt-3 mb-0">Screens for dietary iodine adequacy, iodized salt intake, and thyroid screening factors.</p>
+                                <p class="text-secondary small mt-2 mb-0 ms-5 ps-3">Evaluates dietary folate patterns, tongue surface indicators, and serum folate lab values.</p>
                             </div>
                         </div>
 

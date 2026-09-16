@@ -6,7 +6,7 @@ import requests
 from flask import render_template, redirect, url_for, request, session, flash, send_from_directory, abort, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from application import app, google, Session
-from application.models import User, UserProfile, HealthReport
+from application.models import User, UserProfile, HealthReport, ClinicalRoom, RoomMember
 
 @app.route('/')
 @login_required
@@ -20,6 +20,14 @@ def index():
         reports = db_session.query(HealthReport).filter_by(user_id=current_user.id).order_by(HealthReport.id.desc()).all()
         for r in reports:
             db_session.expunge(r)
+
+        # Fetch clinical room for user if exists
+        user_member = db_session.query(RoomMember).filter_by(user_id=current_user.id).first()
+        user_room = None
+        if user_member:
+            user_room = db_session.get(ClinicalRoom, user_member.room_id)
+            if user_room:
+                db_session.expunge(user_room)
 
     if not profile or not profile.onboarding_completed:
         return redirect(url_for('onboarding'))
@@ -37,7 +45,8 @@ def index():
         latest_report=latest_report,
         recent_reports=recent_reports,
         has_screenings=has_screenings,
-        has_lab_report=has_lab_report
+        has_lab_report=has_lab_report,
+        user_room=user_room
     )
 
 @app.route('/login')
@@ -218,41 +227,63 @@ def start_checkup():
 @app.route('/checkup/questionnaire')
 @login_required
 def checkup_questionnaire():
+    checkup_data = session.get('checkup_data', {})
+    selected_ids = checkup_data.get('selected_modules', ['anemia', 'vitamin_d', 'folate', 'iodine'])
+
     with Session() as db_session:
-        has_past_reports = db_session.query(HealthReport).filter_by(user_id=current_user.id).first() is not None
-    return render_template('checkup_questionnaire.html', is_repeat=has_past_reports)
+        past_reports = db_session.query(HealthReport).filter_by(user_id=current_user.id).order_by(HealthReport.id.desc()).limit(3).all()
+        past_reports_summary = []
+        for r in past_reports:
+            results = []
+            if r.risk_results_json:
+                try:
+                    results = json.loads(r.risk_results_json)
+                except Exception:
+                    pass
+            past_reports_summary.append({
+                'id': r.id,
+                'created_at': r.created_at,
+                'title': r.title,
+                'results': results,
+                'summary': r.summary
+            })
+
+    return render_template(
+        'checkup_questionnaire.html',
+        is_repeat=bool(past_reports_summary),
+        past_reports=past_reports_summary,
+        selected_modules=selected_ids
+    )
 
 @app.route('/checkup/questionnaire/baseline', methods=['POST'])
-@login_required
-def save_baseline_questionnaire():
-    if 'checkup_data' not in session:
-        session['checkup_data'] = {'selected_modules': ['anemia', 'vitamin_d', 'folate', 'iodine'], 'questionnaire': {}, 'visual': {}, 'lab': {}}
-    
-    q_data = {
-        'tiredness': request.form.get('tiredness', ''),
-        'visual_changes': request.form.get('visual_changes', ''),
-        'supplements': request.form.get('supplements', ''),
-        'recent_blood_test': request.form.get('recent_blood_test', ''),
-        'health_changes': request.form.get('health_changes', ''),
-        'additional_notes': request.form.get('additional_notes', ''),
-        'type': 'baseline'
-    }
-    chk = session['checkup_data']
-    chk['questionnaire'] = q_data
-    session['checkup_data'] = chk
-    return redirect(url_for('checkup_visual'))
-
 @app.route('/checkup/questionnaire/repeat', methods=['POST'])
 @login_required
 def save_repeat_questionnaire():
     if 'checkup_data' not in session:
         session['checkup_data'] = {'selected_modules': ['anemia', 'vitamin_d', 'folate', 'iodine'], 'questionnaire': {}, 'visual': {}, 'lab': {}}
     
-    changes = request.form.getlist('changes')
-    q_data = {
-        'changes': changes,
-        'type': 'repeat'
-    }
+    q_data = {}
+    for k in request.form.keys():
+        if k != 'csrf_token':
+            vals = request.form.getlist(k)
+            if len(vals) == 1:
+                q_data[k] = vals[0].strip()
+            else:
+                q_data[k] = [v.strip() for v in vals]
+
+    # Normalize tiredness & symptoms for Risk Engine
+    all_symptoms = []
+    for key in ['symptoms', 'past_symptoms', 'anemia_symptoms', 'b12_symptoms', 'vitd_symptoms', 'folate_symptoms']:
+        val = q_data.get(key, [])
+        if isinstance(val, str):
+            val = [val]
+        all_symptoms.extend(val)
+
+    if any('tiredness' in s.lower() or 'fatigue' in s.lower() for s in all_symptoms):
+        q_data['tiredness'] = 'Often'
+    if any('tingling' in s.lower() or 'numbness' in s.lower() for s in all_symptoms):
+        q_data['b12_tingling'] = 'Yes'
+
     chk = session['checkup_data']
     chk['questionnaire'] = q_data
     session['checkup_data'] = chk
@@ -266,6 +297,8 @@ def checkup_visual():
 @app.route('/checkup/visual', methods=['POST'])
 @login_required
 def save_visual_checkup():
+    import base64
+
     if 'checkup_data' not in session:
         session['checkup_data'] = {'selected_modules': ['anemia', 'vitamin_d', 'folate', 'iodine'], 'questionnaire': {}, 'visual': {}, 'lab': {}}
 
@@ -273,61 +306,53 @@ def save_visual_checkup():
     os.makedirs(upload_dir, exist_ok=True)
 
     saved_images = {}
-    for key in ['eye_image', 'tongue_image', 'nail_image']:
-        file = request.files.get(key)
-        if file and file.filename != '':
-            ext = os.path.splitext(file.filename)[1]
-            filename = f"{uuid.uuid4().hex}{ext}"
-            filepath = os.path.join(upload_dir, filename)
-            file.save(filepath)
-            saved_images[key] = f"assets/uploads/{filename}"
+    
+    # 1. Base64 Live Camera Snapshots
+    base64_mappings = {
+        'eye_base64': 'eye_image',
+        'knuckle_base64': 'knuckle_image',
+        'nail_base64': 'nail_image',
+        'tongue_base64': 'tongue_image'
+    }
+    for b64_key, img_key in base64_mappings.items():
+        b64_val = request.form.get(b64_key, '')
+        if b64_val and b64_val.startswith('data:image'):
+            try:
+                header, encoded = b64_val.split(',', 1)
+                img_data = base64.b64decode(encoded)
+                filename = f"cam_{img_key}_{uuid.uuid4().hex[:8]}.jpg"
+                filepath = os.path.join(upload_dir, filename)
+                with open(filepath, 'wb') as f:
+                    f.write(img_data)
+                saved_images[img_key] = f"assets/uploads/{filename}"
+            except Exception:
+                pass
+
+    # 2. File Input Uploads Fallback
+    for key in ['eye_image', 'tongue_image', 'nail_image', 'knuckle_image']:
+        if key not in saved_images:
+            file = request.files.get(key)
+            if file and file.filename != '':
+                ext = os.path.splitext(file.filename)[1] or '.jpg'
+                filename = f"up_{key}_{uuid.uuid4().hex[:8]}{ext}"
+                filepath = os.path.join(upload_dir, filename)
+                file.save(filepath)
+                saved_images[key] = f"assets/uploads/{filename}"
 
     chk = session['checkup_data']
     chk['visual'] = saved_images
     session['checkup_data'] = chk
-    return redirect(url_for('checkup_lab'))
+    return compute_analysis_results()
 
 @app.route('/checkup/lab')
 @login_required
 def checkup_lab():
-    return render_template('checkup_lab.html')
+    return redirect(url_for('checkup_visual'))
 
 @app.route('/checkup/lab', methods=['POST'])
 @login_required
 def save_lab_checkup():
-    if 'checkup_data' not in session:
-        session['checkup_data'] = {'selected_modules': ['anemia', 'vitamin_d', 'folate', 'iodine'], 'questionnaire': {}, 'visual': {}, 'lab': {}}
-
-    lab_data = {}
-    if not request.form.get('skip_lab'):
-        upload_dir = os.path.join(app.root_path, '..', 'assets', 'uploads')
-        os.makedirs(upload_dir, exist_ok=True)
-        lab_file = request.files.get('lab_file')
-        if lab_file and lab_file.filename != '':
-            ext = os.path.splitext(lab_file.filename)[1]
-            filename = f"lab_{uuid.uuid4().hex}{ext}"
-            filepath = os.path.join(upload_dir, filename)
-            lab_file.save(filepath)
-            lab_data['file'] = f"assets/uploads/{filename}"
-
-        if request.form.get('hb_val'):
-            try: lab_data['hb'] = float(request.form.get('hb_val'))
-            except ValueError: pass
-        if request.form.get('vitd_val'):
-            try: lab_data['vitd'] = float(request.form.get('vitd_val'))
-            except ValueError: pass
-        if request.form.get('folate_val'):
-            try: lab_data['folate'] = float(request.form.get('folate_val'))
-            except ValueError: pass
-        if request.form.get('tsh_val'):
-            try: lab_data['tsh'] = float(request.form.get('tsh_val'))
-            except ValueError: pass
-
-    lab_data['has_lab'] = len(lab_data) > 0
-    chk = session['checkup_data']
-    chk['lab'] = lab_data
-    session['checkup_data'] = chk
-    return redirect(url_for('checkup_analysis'))
+    return compute_analysis_results()
 
 @app.route('/checkup/analysis')
 @login_required
@@ -384,7 +409,14 @@ def compute_analysis_results():
     else:
         lab_summary = "No laboratory values provided."
 
-    exec_summary = f"Screening evaluation completed across {len(selected_modules)} health areas. Primary risk indicator: {risk_eval['nutrition_risk']}."
+    mod_titles = [r['title'] for r in risk_eval['results']]
+    highest_mod = max(risk_eval['results'], key=lambda x: x['score']) if risk_eval['results'] else {'title': 'General Risk', 'score': 0.0}
+    
+    line1 = f"Multimodal screening evaluation completed across {len(selected_modules)} health area(s): {', '.join(mod_titles)}."
+    line2 = f"Primary calculated deficiency probability is led by {highest_mod['title']} at {highest_mod['score']:.2f}% risk based on observational image indicators and symptom intake responses."
+    line3 = "Initial observational indicators and self-reported intake factors suggest reviewing findings with a healthcare professional for potential follow-up diagnostic blood testing."
+    
+    exec_summary = f"{line1}\n{line2}\n{line3}"
 
     with Session() as db_session:
         new_report = HealthReport(
@@ -580,6 +612,159 @@ def profile():
             db_session.expunge(user_profile)
 
     return render_template('profile.html', profile=user_profile)
+
+# ================= Clinical Doctor Room Routes =================
+
+@app.route('/room/create', methods=['POST'])
+@login_required
+def create_room():
+    room_name = request.form.get('room_name', '').strip()
+    description = request.form.get('description', '').strip()
+
+    if not room_name:
+        room_name = f"Dr. {current_user.username.capitalize()}'s Clinical Room"
+
+    room_code = f"DOC-{uuid.uuid4().hex[:6].upper()}"
+    formatted_date = datetime.now().strftime("%b %d, %Y")
+
+    with Session() as db_session:
+        new_room = ClinicalRoom(
+            doctor_id=current_user.id,
+            name=room_name,
+            code=room_code,
+            description=description,
+            created_at=formatted_date
+        )
+        db_session.add(new_room)
+        db_session.commit()
+        db_session.refresh(new_room)
+
+        # Add doctor as room member
+        doc_member = RoomMember(
+            room_id=new_room.id,
+            user_id=current_user.id,
+            role='doctor',
+            joined_at=formatted_date
+        )
+        db_session.add(doc_member)
+        db_session.commit()
+        room_id = new_room.id
+
+    flash(f"Clinical Room '{room_name}' created! Code: {room_code}", "success")
+    return redirect(url_for('view_room', room_id=room_id))
+
+@app.route('/room/join', methods=['POST'])
+@login_required
+def join_room():
+    room_code = request.form.get('room_code', '').strip().upper()
+    if not room_code:
+        flash("Please enter a valid Room Code.", "warning")
+        return redirect(url_for('index'))
+
+    formatted_date = datetime.now().strftime("%b %d, %Y")
+
+    with Session() as db_session:
+        room = db_session.query(ClinicalRoom).filter_by(code=room_code).first()
+        if not room:
+            flash(f"No clinical room found with code '{room_code}'. Please check code and try again.", "danger")
+            return redirect(url_for('index'))
+
+        existing_member = db_session.query(RoomMember).filter_by(room_id=room.id, user_id=current_user.id).first()
+        if not existing_member:
+            new_member = RoomMember(
+                room_id=room.id,
+                user_id=current_user.id,
+                role='patient',
+                joined_at=formatted_date
+            )
+            db_session.add(new_member)
+            db_session.commit()
+            flash(f"Successfully joined clinical room '{room.name}'!", "success")
+        else:
+            flash(f"You are already a member of '{room.name}'.", "info")
+
+        room_id = room.id
+
+    return redirect(url_for('view_room', room_id=room_id))
+
+@app.route('/room/<int:room_id>')
+@login_required
+def view_room(room_id):
+    with Session() as db_session:
+        room = db_session.get(ClinicalRoom, room_id)
+        if not room:
+            flash("Clinical Room not found.", "warning")
+            return redirect(url_for('index'))
+
+        members = db_session.query(RoomMember).filter_by(room_id=room.id).all()
+        member_user_ids = [m.user_id for m in members]
+        
+        users_list = db_session.query(User).filter(User.id.in_(member_user_ids)).all()
+        users_map = {u.id: u for u in users_list}
+        doctor_user = users_map.get(room.doctor_id)
+
+        # Collect all health reports for room members (patients)
+        member_reports = {}
+        for uid in member_user_ids:
+            reps = db_session.query(HealthReport).filter_by(user_id=uid).order_by(HealthReport.id.desc()).all()
+            for r in reps:
+                db_session.expunge(r)
+            member_reports[uid] = reps
+
+        is_member = current_user.id in member_user_ids
+        is_doctor = (current_user.id == room.doctor_id)
+        db_session.expunge(room)
+
+    if not is_member:
+        flash("You are not a member of this clinical room.", "danger")
+        return redirect(url_for('index'))
+
+    return render_template(
+        'room_dashboard.html',
+        room=room,
+        members=members,
+        users_map=users_map,
+        doctor_user=doctor_user,
+        member_reports=member_reports,
+        is_doctor=is_doctor
+    )
+
+@app.route('/room/<int:room_id>/add-patient', methods=['POST'])
+@login_required
+def add_patient_to_room(room_id):
+    email = request.form.get('patient_email', '').strip().lower()
+    if not email:
+        flash("Please enter a patient email address.", "warning")
+        return redirect(url_for('view_room', room_id=room_id))
+
+    formatted_date = datetime.now().strftime("%b %d, %Y")
+
+    with Session() as db_session:
+        room = db_session.get(ClinicalRoom, room_id)
+        if not room or room.doctor_id != current_user.id:
+            flash("Only the room doctor can add patients by email.", "danger")
+            return redirect(url_for('index'))
+
+        patient_user = db_session.query(User).filter_by(email=email).first()
+        if not patient_user:
+            flash(f"No registered user found with email '{email}'. Make sure patient has an account.", "warning")
+            return redirect(url_for('view_room', room_id=room_id))
+
+        existing_member = db_session.query(RoomMember).filter_by(room_id=room_id, user_id=patient_user.id).first()
+        if existing_member:
+            flash(f"Patient ({email}) is already in this room.", "info")
+        else:
+            new_member = RoomMember(
+                room_id=room_id,
+                user_id=patient_user.id,
+                role='patient',
+                joined_at=formatted_date
+            )
+            db_session.add(new_member)
+            db_session.commit()
+            flash(f"Patient ({patient_user.username or email}) successfully added to room!", "success")
+
+    return redirect(url_for('view_room', room_id=room_id))
 
 @app.route('/logout')
 def logout():

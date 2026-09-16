@@ -59,6 +59,31 @@ class HealthReport(Base):
     def __repr__(self):
         return f"<HealthReport (id={self.id}, user_id={self.user_id}, title={self.title})>"
 
+class ClinicalRoom(Base):
+    __tablename__ = 'clinical_rooms'
+
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
+    doctor_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False)
+    code: Mapped[str] = mapped_column(unique=True, nullable=False)
+    description: Mapped[str] = mapped_column(nullable=True)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+
+    def __repr__(self):
+        return f"<ClinicalRoom (id={self.id}, code={self.code}, name={self.name})>"
+
+class RoomMember(Base):
+    __tablename__ = 'room_members'
+
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
+    room_id: Mapped[int] = mapped_column(ForeignKey('clinical_rooms.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    role: Mapped[str] = mapped_column(default='patient') # 'doctor' or 'patient'
+    joined_at: Mapped[str] = mapped_column(nullable=False)
+
+    def __repr__(self):
+        return f"<RoomMember (room_id={self.room_id}, user_id={self.user_id}, role={self.role})>"
+
 @login_manager.user_loader
 def load_user(user_id):
     with Session() as session:

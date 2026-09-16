@@ -11,118 +11,141 @@
                 
                 <div class="text-center mb-4">
                     <span class="badge bg-info-subtle text-info px-3 py-2 rounded-pill fw-bold mb-2">
-                        <i class="bi bi-camera me-1"></i>Step 3: Visual Health Checkup
+                        <i class="bi bi-camera-fill me-1"></i>Step 3: Visual Health Checkup
                     </span>
-                    <h2 class="fw-bold text-dark">Visual Image Capture</h2>
-                    <p class="text-muted small">We'll use a few images as one part of your preliminary screening assessment.</p>
+                    <h2 class="fw-bold text-dark">Camera Image Capture</h2>
+                    <p class="text-muted small mb-0">Capture photos <strong>one by one</strong>: 1. Lower Eyes &rarr; 2. Knuckles &rarr; 3. Tongue</p>
                 </div>
 
-                <form id="visualForm" method="POST" action="{{ url_for('save_visual_checkup') }}" enctype="multipart/form-data">
+                <!-- STEP PROGRESS BADGE & BAR -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-primary-subtle text-primary px-3 py-1.5 rounded-pill fw-bold" id="camStepBadge">
+                            Step 1 of 3: Lower Eyes
+                        </span>
+                        <span class="text-muted small fw-medium" id="camPercent">33% Completed</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div id="camProgressBar" class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: 33%;"></div>
+                    </div>
+                </div>
+
+                <form id="visualForm" method="POST" action="{{ url_for('save_visual_checkup') }}">
                     
-                    <!-- STEP 1: EYES / CONJUNCTIVA -->
-                    <div class="card bg-light border-0 rounded-4 p-4 mb-4" id="box_eyes">
-                        <div class="d-flex align-items-center gap-3 mb-3">
-                            <div class="rounded-circle bg-primary-subtle text-primary p-3">
-                                <i class="bi bi-eye-fill fs-4"></i>
-                            </div>
-                            <div>
-                                <h5 class="fw-bold mb-0">1. Eyes & Conjunctiva</h5>
-                                <span class="text-muted small">Capture a clear photo of your eyes/palpebral conjunctiva in good lighting.</span>
-                            </div>
+                    <!-- Hidden Base64 Camera Inputs -->
+                    <input type="hidden" name="eye_base64" id="eye_base64" value="">
+                    <input type="hidden" name="knuckle_base64" id="knuckle_base64" value="">
+                    <input type="hidden" name="nail_base64" id="nail_base64" value="">
+                    <input type="hidden" name="tongue_base64" id="tongue_base64" value="">
+
+                    <!-- LIVE CAMERA STREAM CONTAINER -->
+                    <div class="card bg-dark text-white rounded-4 p-4 text-center mb-4 shadow-sm position-relative overflow-hidden">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-danger rounded-pill px-3 py-1.5" id="camStatusBadge">
+                                <i class="bi bi-circle-fill me-1 small"></i>Camera Off
+                            </span>
+                            <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3" id="startCamBtn" onclick="startWebcam()">
+                                <i class="bi bi-camera-video me-1"></i>Turn On Camera
+                            </button>
                         </div>
 
-                        <div class="alert alert-white border rounded-3 small text-muted mb-3">
-                            <i class="bi bi-info-circle me-1 text-primary"></i><strong>Tips for best quality:</strong> Ensure bright natural light, keep camera steady, and keep image in sharp focus.
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <input type="file" name="eye_image" id="eye_file" class="form-control" accept="image/*" onchange="handleImagePreview(this, 'eye_preview', 'eye_quality_err')">
-                        </div>
-
-                        <!-- Image Preview & Quality Check Alert -->
-                        <div id="eye_preview_container" class="mt-3 d-none text-center">
-                            <img id="eye_preview" src="" alt="Eye Preview" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-height: 200px;">
-                            <div class="d-flex justify-content-center gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeImage('eye_file', 'eye_preview_container', 'eye_quality_err')">
-                                    <i class="bi bi-trash me-1"></i>Remove / Retake
-                                </button>
+                        <!-- Live Video Feed -->
+                        <div class="position-relative mx-auto rounded-3 overflow-hidden" style="max-width: 420px; background: #111;">
+                            <video id="webcamVideo" autoplay playsinline class="w-100 rounded-3 d-none" style="max-height: 300px; object-fit: cover;"></video>
+                            
+                            <div id="videoPlaceholder" class="py-5 my-2 text-white-50">
+                                <i class="bi bi-camera-video-off fs-1 mb-2 d-block text-secondary"></i>
+                                <p class="small mb-0">Click <strong>"Turn On Camera"</strong> above to enable live view</p>
                             </div>
                         </div>
 
-                        <div class="invalid-feedback d-none mt-2" id="eye_quality_err">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i>We couldn't get a clear enough image. Please ensure good lighting and upload a clear, focused photo.
+                        <canvas id="captureCanvas" class="d-none"></canvas>
+                    </div>
+
+                    <!-- 1-BY-1 VISUAL STEPS -->
+
+                    <!-- STEP 1: LOWER EYES -->
+                    <div class="vis-step" id="vstep_0">
+                        <div class="card bg-light border-0 rounded-4 p-4 mb-4">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="rounded-circle bg-primary-subtle text-primary p-3">
+                                    <i class="bi bi-eye-fill fs-4"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0">1. Lower Eyes (Lower Eyelid)</h5>
+                                    <span class="text-muted small">Pull down lower eyelid gently under bright lighting.</span>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-primary btn-lg rounded-pill w-100 fw-semibold mb-3" onclick="takeSnapshot('eye')">
+                                <i class="bi bi-camera me-1"></i>Capture Lower Eye Photo
+                            </button>
+
+                            <!-- Preview -->
+                            <div id="preview_box_eye" class="d-none text-center">
+                                <img id="img_preview_eye" src="" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-height: 160px;">
+                                <div class="text-success small fw-bold mb-2"><i class="bi bi-check-circle-fill me-1"></i>Photo Captured Successfully</div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- STEP 2: TONGUE -->
-                    <div class="card bg-light border-0 rounded-4 p-4 mb-4" id="box_tongue">
-                        <div class="d-flex align-items-center gap-3 mb-3">
-                            <div class="rounded-circle bg-danger-subtle text-danger p-3">
-                                <i class="bi bi-emoji-smile-fill fs-4"></i>
+                    <!-- STEP 2: KNUCKLES -->
+                    <div class="vis-step d-none" id="vstep_1">
+                        <div class="card bg-light border-0 rounded-4 p-4 mb-4">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="rounded-circle bg-warning-subtle text-warning p-3">
+                                    <i class="bi bi-hand-index-thumb-fill fs-4"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0">2. Knuckles</h5>
+                                    <span class="text-muted small">Hold your knuckles/fingernails up clearly to camera.</span>
+                                </div>
                             </div>
-                            <div>
-                                <h5 class="fw-bold mb-0">2. Tongue Surface</h5>
-                                <span class="text-muted small">Capture a clear image of your tongue surface for papillary atrophy check.</span>
+
+                            <button type="button" class="btn btn-warning text-dark btn-lg rounded-pill w-100 fw-semibold mb-3" onclick="takeSnapshot('knuckle')">
+                                <i class="bi bi-camera me-1"></i>Capture Knuckles Photo
+                            </button>
+
+                            <!-- Preview -->
+                            <div id="preview_box_knuckle" class="d-none text-center">
+                                <img id="img_preview_knuckle" src="" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-height: 160px;">
+                                <div class="text-success small fw-bold mb-2"><i class="bi bi-check-circle-fill me-1"></i>Photo Captured Successfully</div>
                             </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <input type="file" name="tongue_image" id="tongue_file" class="form-control" accept="image/*" onchange="handleImagePreview(this, 'tongue_preview', 'tongue_quality_err')">
-                        </div>
-
-                        <!-- Image Preview & Quality Check -->
-                        <div id="tongue_preview_container" class="mt-3 d-none text-center">
-                            <img id="tongue_preview" src="" alt="Tongue Preview" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-height: 200px;">
-                            <div class="d-flex justify-content-center gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeImage('tongue_file', 'tongue_preview_container', 'tongue_quality_err')">
-                                    <i class="bi bi-trash me-1"></i>Remove / Retake
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="invalid-feedback d-none mt-2" id="tongue_quality_err">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Image quality insufficient. Please retake photo with sharp focus.
                         </div>
                     </div>
 
-                    <!-- STEP 3: NAILS / KNUCKLES -->
-                    <div class="card bg-light border-0 rounded-4 p-4 mb-4" id="box_nails">
-                        <div class="d-flex align-items-center gap-3 mb-3">
-                            <div class="rounded-circle bg-warning-subtle text-warning p-3">
-                                <i class="bi bi-hand-index-thumb-fill fs-4"></i>
+                    <!-- STEP 3: TONGUE -->
+                    <div class="vis-step d-none" id="vstep_2">
+                        <div class="card bg-light border-0 rounded-4 p-4 mb-4">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="rounded-circle bg-danger-subtle text-danger p-3">
+                                    <i class="bi bi-emoji-smile-fill fs-4"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0">3. Tongue Surface</h5>
+                                    <span class="text-muted small">Stick out tongue surface clearly under good lighting.</span>
+                                </div>
                             </div>
-                            <div>
-                                <h5 class="fw-bold mb-0">3. Nails or Knuckles</h5>
-                                <span class="text-muted small">Capture a clear photo of your fingernails or knuckles.</span>
+
+                            <button type="button" class="btn btn-danger btn-lg rounded-pill w-100 fw-semibold mb-3" onclick="takeSnapshot('tongue')">
+                                <i class="bi bi-camera me-1"></i>Capture Tongue Photo
+                            </button>
+
+                            <!-- Preview -->
+                            <div id="preview_box_tongue" class="d-none text-center">
+                                <img id="img_preview_tongue" src="" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-height: 160px;">
+                                <div class="text-success small fw-bold mb-2"><i class="bi bi-check-circle-fill me-1"></i>Photo Captured Successfully</div>
                             </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <input type="file" name="nail_image" id="nail_file" class="form-control" accept="image/*" onchange="handleImagePreview(this, 'nail_preview', 'nail_quality_err')">
-                        </div>
-
-                        <!-- Image Preview & Quality Check -->
-                        <div id="nail_preview_container" class="mt-3 d-none text-center">
-                            <img id="nail_preview" src="" alt="Nails Preview" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-height: 200px;">
-                            <div class="d-flex justify-content-center gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeImage('nail_file', 'nail_preview_container', 'nail_quality_err')">
-                                    <i class="bi bi-trash me-1"></i>Remove / Retake
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="invalid-feedback d-none mt-2" id="nail_quality_err">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Image quality insufficient. Please upload a clear photo.
                         </div>
                     </div>
 
-                    <!-- Navigation Footer -->
+                    <!-- NAVIGATION FOOTER -->
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                        <a href="{{ url_for('checkup_questionnaire') }}" class="btn btn-outline-secondary rounded-pill px-4">
-                            <i class="bi bi-arrow-left me-1"></i>Back
-                        </a>
-                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-semibold" id="visualSubmitBtn">
-                            Continue to Lab Intake <i class="bi bi-arrow-right ms-1"></i>
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4 invisible" id="vPrevBtn" onclick="prevVisStep()">
+                            <i class="bi bi-arrow-left me-1"></i>Previous
+                        </button>
+                        <button type="button" class="btn btn-primary rounded-pill px-5 fw-semibold" id="vNextBtn" onclick="nextVisStep()">
+                            Next: Knuckles <i class="bi bi-arrow-right ms-1"></i>
                         </button>
                     </div>
 
@@ -135,36 +158,121 @@
 </div>
 
 <script>
-    function handleImagePreview(inputEl, previewImgId, errId) {
-        const file = inputEl.files[0];
-        const errEl = document.getElementById(errId);
-        const previewContainer = document.getElementById(previewImgId + '_container');
-        const previewImg = document.getElementById(previewImgId);
+    let cameraStream = null;
+    let currentVisStep = 0;
+    const totalVisSteps = 3;
 
-        if (!file) return;
+    async function startWebcam() {
+        const video = document.getElementById('webcamVideo');
+        const placeholder = document.getElementById('videoPlaceholder');
+        const badge = document.getElementById('camStatusBadge');
 
-        // Basic Quality Conditions Check: File size > 5KB, valid image type
-        if (file.size < 5000 || !file.type.startsWith('image/')) {
-            errEl.innerText = "We couldn't get a clear enough image. Please retake photo with better resolution.";
-            errEl.classList.remove('d-none');
-            previewContainer.classList.add('d-none');
-            inputEl.value = '';
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            video.srcObject = cameraStream;
+            video.classList.remove('d-none');
+            placeholder.classList.add('d-none');
+
+            badge.className = 'badge bg-success rounded-pill px-3 py-1.5';
+            badge.innerHTML = '<i class="bi bi-record-circle-fill me-1"></i>Camera Active';
+        } catch (err) {
+            alert('Camera access denied or unavailable. Please allow camera access in browser permissions.');
+        }
+    }
+
+    function takeSnapshot(key) {
+        const video = document.getElementById('webcamVideo');
+        if (!cameraStream || video.classList.contains('d-none')) {
+            alert('Please click "Turn On Camera" first to activate live camera view.');
             return;
         }
 
-        errEl.classList.add('d-none');
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            previewContainer.classList.remove('d-none');
-        };
-        reader.readAsDataURL(file);
+        const canvas = document.getElementById('captureCanvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+        // Store base64 input
+        const hiddenInp = document.getElementById(key + '_base64');
+        if (hiddenInp) hiddenInp.value = dataUrl;
+        if (key === 'knuckle') {
+            const nailInp = document.getElementById('nail_base64');
+            if (nailInp) nailInp.value = dataUrl;
+        }
+
+        // Show preview
+        const previewImg = document.getElementById('img_preview_' + key);
+        const previewBox = document.getElementById('preview_box_' + key);
+        if (previewImg && previewBox) {
+            previewImg.src = dataUrl;
+            previewBox.classList.remove('d-none');
+        }
     }
 
-    function removeImage(inputId, containerId, errId) {
-        document.getElementById(inputId).value = '';
-        document.getElementById(containerId).classList.add('d-none');
-        document.getElementById(errId).classList.add('d-none');
+    function updateVisWizardUI() {
+        for (let i = 0; i < totalVisSteps; i++) {
+            const el = document.getElementById('vstep_' + i);
+            if (el) {
+                if (i === currentVisStep) {
+                    el.classList.remove('d-none');
+                } else {
+                    el.classList.add('d-none');
+                }
+            }
+        }
+
+        const titles = ['1 of 3: Lower Eyes', '2 of 3: Knuckles', '3 of 3: Tongue'];
+        const badge = document.getElementById('camStepBadge');
+        if (badge) badge.innerText = 'Step ' + titles[currentVisStep];
+
+        const percent = Math.round(((currentVisStep + 1) / totalVisSteps) * 100);
+        const pText = document.getElementById('camPercent');
+        if (pText) pText.innerText = percent + '% Completed';
+
+        const pBar = document.getElementById('camProgressBar');
+        if (pBar) pBar.style.width = percent + '%';
+
+        const prevBtn = document.getElementById('vPrevBtn');
+        if (prevBtn) {
+            if (currentVisStep === 0) prevBtn.classList.add('invisible');
+            else prevBtn.classList.remove('invisible');
+        }
+
+        const nextBtn = document.getElementById('vNextBtn');
+        if (nextBtn) {
+            if (currentVisStep === 0) {
+                nextBtn.innerHTML = 'Next: Knuckles <i class="bi bi-arrow-right ms-1"></i>';
+                nextBtn.className = 'btn btn-primary rounded-pill px-5 fw-semibold';
+                nextBtn.onclick = nextVisStep;
+            } else if (currentVisStep === 1) {
+                nextBtn.innerHTML = 'Next: Tongue <i class="bi bi-arrow-right ms-1"></i>';
+                nextBtn.className = 'btn btn-primary rounded-pill px-5 fw-semibold';
+                nextBtn.onclick = nextVisStep;
+            } else {
+                nextBtn.innerHTML = 'Generate Report & View Results <i class="bi bi-check2-circle ms-1"></i>';
+                nextBtn.className = 'btn btn-success rounded-pill px-5 fw-semibold';
+                nextBtn.onclick = function() {
+                    document.getElementById('visualForm').submit();
+                };
+            }
+        }
+    }
+
+    function nextVisStep() {
+        if (currentVisStep < totalVisSteps - 1) {
+            currentVisStep++;
+            updateVisWizardUI();
+        }
+    }
+
+    function prevVisStep() {
+        if (currentVisStep > 0) {
+            currentVisStep--;
+            updateVisWizardUI();
+        }
     }
 </script>
 {% endblock %}

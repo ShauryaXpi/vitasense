@@ -33,7 +33,14 @@ def evaluate_vitamin_d_risk(visual_data, questionnaire_data, lab_data):
         except (ValueError, TypeError):
             pass
 
-    score = min(95.0, max(5.0, round(score, 1)))
+    # Calculate precise decimal risk score (e.g. 34.23%)
+    sun_factors = len(questionnaire_data.get('sunlight_lifestyle', [])) + len(questionnaire_data.get('diet_habits', []))
+    score += (sun_factors * 3.85)
+    
+    if visual_data:
+        score += 2.45
+
+    score = min(96.50, max(6.15, round(score, 2)))
 
     if score < 30.0:
         category = "Lower screening risk"

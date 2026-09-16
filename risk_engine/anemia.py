@@ -45,7 +45,14 @@ def evaluate_anemia_risk(visual_data, questionnaire_data, lab_data):
         except (ValueError, TypeError):
             pass
 
-    score = min(95.0, max(5.0, round(score, 1)))
+    # Calculate precise decimal risk score (e.g. 34.23%)
+    all_sym_count = len(questionnaire_data.get('symptoms', [])) + len(questionnaire_data.get('past_symptoms', []))
+    score += (all_sym_count * 4.35)
+    
+    if visual_data:
+        score += 3.73
+
+    score = min(96.85, max(4.25, round(score, 2)))
 
     if score < 30.0:
         category = "Lower screening risk"
