@@ -59,30 +59,68 @@ class HealthReport(Base):
     def __repr__(self):
         return f"<HealthReport (id={self.id}, user_id={self.user_id}, title={self.title})>"
 
-class ClinicalRoom(Base):
-    __tablename__ = 'clinical_rooms'
+class DoctorShare(Base):
+    __tablename__ = 'doctor_shares'
 
     id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
-    doctor_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
-    name: Mapped[str] = mapped_column(nullable=False)
-    code: Mapped[str] = mapped_column(unique=True, nullable=False)
-    description: Mapped[str] = mapped_column(nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    token: Mapped[str] = mapped_column(unique=True, nullable=False)
+    shared_sections_json: Mapped[str] = mapped_column(nullable=False) # JSON array of selected categories
+    duration_hours: Mapped[float] = mapped_column(default=24.0)
+    created_at: Mapped[str] = mapped_column(nullable=False)
+    expires_at_timestamp: Mapped[float] = mapped_column(nullable=False) # POSIX timestamp for exact expiration
+    is_revoked: Mapped[bool] = mapped_column(default=False)
+    last_accessed_at: Mapped[str] = mapped_column(nullable=True)
+
+    def __repr__(self):
+        return f"<DoctorShare (token={self.token}, user_id={self.user_id}, is_revoked={self.is_revoked})>"
+
+
+class UserPersonalHealth(Base):
+    __tablename__ = 'user_personal_health'
+
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), unique=True, nullable=False)
+    full_name: Mapped[str] = mapped_column(nullable=True)
+    dob: Mapped[str] = mapped_column(nullable=True)
+    blood_group: Mapped[str] = mapped_column(nullable=True) # e.g. "A+", "O-", etc.
+    emergency_contact: Mapped[str] = mapped_column(nullable=True)
+    known_allergies: Mapped[str] = mapped_column(nullable=True)
+    medical_conditions: Mapped[str] = mapped_column(nullable=True)
+    current_medications: Mapped[str] = mapped_column(nullable=True)
+    preferred_hospital_doctor: Mapped[str] = mapped_column(nullable=True)
+    notes: Mapped[str] = mapped_column(nullable=True)
+
+    def __repr__(self):
+        return f"<UserPersonalHealth (user_id={self.user_id}, blood_group={self.blood_group})>"
+
+class MedicalDocument(Base):
+    __tablename__ = 'medical_documents'
+
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    doc_name: Mapped[str] = mapped_column(nullable=False)
+    doc_type: Mapped[str] = mapped_column(nullable=False) # e.g. "Blood test", "CBC", "Vitamin test", "Thyroid", "Diabetes", "Prescription", "Other"
+    file_path: Mapped[str] = mapped_column(nullable=False)
+    file_name: Mapped[str] = mapped_column(nullable=False)
+    upload_date: Mapped[str] = mapped_column(nullable=False)
+
+    def __repr__(self):
+        return f"<MedicalDocument (id={self.id}, user_id={self.user_id}, doc_name={self.doc_name})>"
+
+class EmergencyAccessShare(Base):
+    __tablename__ = 'emergency_access_shares'
+
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    token: Mapped[str] = mapped_column(unique=True, nullable=False)
+    shared_sections_json: Mapped[str] = mapped_column(nullable=False) # JSON array of shared field names/ids
+    is_revoked: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[str] = mapped_column(nullable=False)
 
     def __repr__(self):
-        return f"<ClinicalRoom (id={self.id}, code={self.code}, name={self.name})>"
+        return f"<EmergencyAccessShare (token={self.token}, user_id={self.user_id}, is_revoked={self.is_revoked})>"
 
-class RoomMember(Base):
-    __tablename__ = 'room_members'
-
-    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
-    room_id: Mapped[int] = mapped_column(ForeignKey('clinical_rooms.id'), nullable=False)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
-    role: Mapped[str] = mapped_column(default='patient') # 'doctor' or 'patient'
-    joined_at: Mapped[str] = mapped_column(nullable=False)
-
-    def __repr__(self):
-        return f"<RoomMember (room_id={self.room_id}, user_id={self.user_id}, role={self.role})>"
 
 @login_manager.user_loader
 def load_user(user_id):

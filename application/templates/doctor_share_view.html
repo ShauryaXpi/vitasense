@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}VitaSense — Shared Patient Health Information{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    {% if is_expired %}
+    <div class="card shadow-sm border-0 rounded-4 bg-white p-5 text-center my-5 max-width-600 mx-auto" style="max-width: 580px;">
+        <div class="rounded-circle bg-warning-subtle text-warning p-4 d-inline-flex mx-auto mb-3">
+            <i class="bi bi-clock-history fs-1"></i>
+        </div>
+        <h4 class="fw-bold text-dark mb-2">Doctor Access Has Expired</h4>
+        <p class="text-secondary mb-4">
+            The temporary sharing access period for this link has ended. The patient will need to generate a new sharing link to grant access.
+        </p>
+        <div>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-primary rounded-pill px-4">
+                <i class="bi bi-house-door me-1"></i>Return to VitaSense Home
+            </a>
+        </div>
+    </div>
+    {% elif is_revoked or not share %}
+    <div class="card shadow-sm border-0 rounded-4 bg-white p-5 text-center my-5 max-width-600 mx-auto" style="max-width: 580px;">
+        <div class="rounded-circle bg-danger-subtle text-danger p-4 d-inline-flex mx-auto mb-3">
+            <i class="bi bi-shield-x fs-1"></i>
+        </div>
+        <h4 class="fw-bold text-dark mb-2">Doctor Access Has Been Revoked</h4>
+        <p class="text-secondary mb-4">
+            This doctor sharing token is invalid or has been explicitly revoked by the patient.
+        </p>
+        <div>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-primary rounded-pill px-4">
+                <i class="bi bi-house-door me-1"></i>Return to VitaSense Home
+            </a>
+        </div>
+    </div>
+    {% else %}
+
+    <!-- READ-ONLY DOCTOR SHARING BOARD -->
+    <div class="card shadow-sm border-0 rounded-4 bg-white p-4 mb-4 border-top border-4 border-primary">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
+            <div>
+                <span class="badge bg-primary px-3 py-2 rounded-pill fw-bold mb-2">
+                    <i class="bi bi-hospital-fill me-1"></i>Read-Only Clinical View
+                </span>
+                <h2 class="fw-bold text-dark mb-1">VitaSense — Shared Patient Health Information</h2>
+                <p class="text-muted mb-0">Information shared directly by patient: <strong class="text-dark">{{ patient_name }}</strong></p>
+            </div>
+            <div class="text-md-end text-muted small">
+                <div><i class="bi bi-calendar-event me-1"></i>Created: {{ share.created_at }}</div>
+                <div class="text-danger fw-semibold"><i class="bi bi-clock me-1"></i>Expires: {{ formatted_expires_at }}</div>
+                {% if share.last_accessed_at %}
+                <div class="text-secondary"><i class="bi bi-eye me-1"></i>Last Accessed: {{ share.last_accessed_at }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="alert alert-info border-0 rounded-3 small mb-4">
+            <i class="bi bi-info-circle-fill me-2"></i>You are viewing a secure, temporary read-only record. You cannot edit patient details, upload documents, or modify settings.
+        </div>
+
+        <div class="row g-4">
+
+            <!-- PATIENT SUMMARY & BLOOD GROUP -->
+            {% if 'personal_info' in shared_items or 'blood_group' in shared_items %}
+            <div class="col-12">
+                <div class="card border-0 bg-light rounded-4 p-4">
+                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-person-vcard text-primary me-2"></i>Patient Information</h5>
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
+                            <span class="text-muted small d-block">Patient Name</span>
+                            <span class="fw-semibold text-dark">{{ patient_name }}</span>
+                        </div>
+                        {% if 'blood_group' in shared_items %}
+                        <div class="col-6 col-md-3">
+                            <span class="text-muted small d-block">Blood Group</span>
+                            <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill fw-bold fs-6">
+                                {{ personal_health.blood_group if personal_health and personal_health.blood_group else 'Unspecified' }}
+                            </span>
+                        </div>
+                        {% endif %}
+                        {% if 'personal_info' in shared_items and personal_health %}
+                        <div class="col-6 col-md-3">
+                            <span class="text-muted small d-block">Date of Birth</span>
+                            <span class="fw-semibold text-dark">{{ personal_health.dob if personal_health.dob else 'Not set' }}</span>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <span class="text-muted small d-block">Emergency Contact</span>
+                            <span class="fw-semibold text-dark">{{ personal_health.emergency_contact if personal_health.emergency_contact else 'Not set' }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ALLERGIES -->
+            {% if 'allergies' in shared_items %}
+            <div class="col-12 col-md-6">
+                <div class="card border-0 bg-light rounded-4 p-4 h-100">
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Known Allergies</h6>
+                    <p class="text-dark mb-0 fs-6">{{ personal_health.known_allergies if personal_health and personal_health.known_allergies else 'No known allergies recorded by patient.' }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- MEDICATIONS -->
+            {% if 'medications' in shared_items %}
+            <div class="col-12 col-md-6">
+                <div class="card border-0 bg-light rounded-4 p-4 h-100">
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-capsule text-primary me-2"></i>Current Medications</h6>
+                    <p class="text-dark mb-0 fs-6">{{ personal_health.current_medications if personal_health and personal_health.current_medications else 'No current medications recorded by patient.' }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- MEDICAL CONDITIONS -->
+            {% if 'conditions' in shared_items %}
+            <div class="col-12">
+                <div class="card border-0 bg-light rounded-4 p-4">
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-activity text-danger me-2"></i>Important Medical Conditions</h6>
+                    <p class="text-dark mb-0 fs-6">{{ personal_health.medical_conditions if personal_health and personal_health.medical_conditions else 'No medical conditions recorded by patient.' }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- VITASENSE CHECKUP / SCREENING REPORTS -->
+            {% if 'vitasense_reports' in shared_items or 'screening_reports' in shared_items or 'health_history' in shared_items %}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-journal-medical text-primary me-2"></i>VitaSense Screening Reports</h5>
+                    {% if reports %}
+                        <div class="d-flex flex-column gap-3">
+                            {% for rep in reports %}
+                            <div class="p-3 bg-light rounded-4 border">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small fw-bold">Assessment Complete</span>
+                                            <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ rep.created_at }}</span>
+                                        </div>
+                                        <h6 class="fw-bold text-dark mb-1">{{ rep.title }}</h6>
+                                        <p class="text-muted small mb-0">{{ rep.summary if rep.summary else rep.screening_type }}</p>
+                                    </div>
+                                    {% if rep.pdf_path %}
+                                    <div>
+                                        <a href="{{ url_for('download_report_pdf', report_id=rep.id) }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                            <i class="bi bi-file-earmark-pdf-fill me-1"></i>Download PDF Report
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No screening reports available for sharing.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- MEDICAL DOCUMENTS / LAB REPORTS -->
+            {% if 'lab_reports' in shared_items or 'medical_documents' in shared_items %}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-folder-fill text-primary me-2"></i>Shared Medical Documents & Lab Reports</h5>
+                    {% if documents %}
+                        <div class="row g-3">
+                            {% for doc in documents %}
+                            <div class="col-12 col-md-6">
+                                <div class="p-3 bg-light rounded-4 border h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 mb-2">{{ doc.doc_type }}</span>
+                                        <h6 class="fw-bold text-dark mb-1">{{ doc.doc_name }}</h6>
+                                        <p class="text-muted small mb-3">Uploaded: {{ doc.upload_date }}</p>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ url_for('view_shared_doctor_document', token=share.token, doc_id=doc.id) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill flex-grow-1">
+                                            <i class="bi bi-eye me-1"></i>View Document
+                                        </a>
+                                        <a href="{{ url_for('download_shared_doctor_document', token=share.token, doc_id=doc.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1">
+                                            <i class="bi bi-download me-1"></i>Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No medical documents uploaded or shared by patient.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}

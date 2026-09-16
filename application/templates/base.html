@@ -66,6 +66,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link text-secondary {{ 'active fw-bold' if request.endpoint == 'health_locker' else '' }}" href="{{ url_for('health_locker') }}">
+                                <i class="bi bi-lock-fill me-1"></i>Health Locker
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link text-secondary {{ 'active fw-bold' if request.endpoint == 'reports' else '' }}" href="{{ url_for('reports') }}">
                                 <i class="bi bi-file-earmark-medical me-1"></i>Reports
                             </a>
@@ -100,6 +105,11 @@
                                 <li>
                                     <a class="dropdown-item py-2" href="{{ url_for('profile') }}">
                                         <i class="bi bi-person me-2 text-primary"></i>Profile
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{{ url_for('health_locker') }}">
+                                        <i class="bi bi-lock-fill me-2 text-warning"></i>Health Locker
                                     </a>
                                 </li>
                                 <li>

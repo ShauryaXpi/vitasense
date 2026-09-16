@@ -1,0 +1,778 @@
+{% extends "base.html" %}
+
+{% block title %}Health Locker - VitaSense{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- PAGE HEADER BANNER -->
+    <div class="card shadow-sm border-0 rounded-4 bg-white p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold">
+                        <i class="bi bi-shield-lock-fill me-1"></i>Personal Health Vault
+                    </span>
+                    <span class="text-muted small"><i class="bi bi-shield-check me-1"></i>Encrypted Account Storage</span>
+                </div>
+                <h2 class="fw-bold text-dark mb-1"><i class="bi bi-lock-fill text-primary me-2"></i>Health Locker</h2>
+                <p class="text-muted mb-0">Securely store, organize, and access your medical reports, personal health details, and doctor sharing links.</p>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
+                    <i class="bi bi-file-earmark-plus-fill me-2"></i>Upload Medical Document
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEARCH BAR -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-3 mb-4">
+        <div class="input-group input-group-lg border-0">
+            <span class="input-group-text bg-transparent border-0 text-muted ps-3">
+                <i class="bi bi-search fs-5"></i>
+            </span>
+            <input type="text" id="lockerSearchInput" class="form-control border-0 shadow-none ps-2" placeholder="Search your health records by name, document type, checkup, or date..." style="font-size: 1rem;">
+            <button class="btn btn-light rounded-pill px-3 border text-secondary me-1" type="button" id="clearSearchBtn">
+                <i class="bi bi-x-circle me-1"></i>Clear
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+
+        <!-- LEFT COLUMN: PERSONAL HEALTH INFO & EMERGENCY INFO -->
+        <div class="col-12 col-lg-5">
+            
+            <!-- 1. PERSONAL HEALTH INFORMATION -->
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-vcard text-primary me-2"></i>Personal Health Information</h5>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editHealthInfoModal">
+                        <i class="bi bi-pencil-square me-1"></i>Edit
+                    </button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <span class="text-muted small d-block">Full Name</span>
+                        <span class="fw-semibold text-dark">{{ personal_health.full_name if personal_health and personal_health.full_name else user.username }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted small d-block">Date of Birth</span>
+                        <span class="fw-semibold text-dark">{{ personal_health.dob if personal_health and personal_health.dob else 'Not set' }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted small d-block">Blood Group</span>
+                        <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill fw-bold fs-6">
+                            {{ personal_health.blood_group if personal_health and personal_health.blood_group else 'Unspecified' }}
+                        </span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted small d-block">Emergency Contact</span>
+                        <span class="fw-semibold text-dark">{{ personal_health.emergency_contact if personal_health and personal_health.emergency_contact else 'Not set' }}</span>
+                    </div>
+                    <div class="col-12">
+                        <hr class="my-2 text-muted">
+                    </div>
+                    <div class="col-12">
+                        <span class="text-muted small d-block">Known Allergies</span>
+                        <span class="text-dark">{{ personal_health.known_allergies if personal_health and personal_health.known_allergies else 'None recorded' }}</span>
+                    </div>
+                    <div class="col-12">
+                        <span class="text-muted small d-block">Medical Conditions</span>
+                        <span class="text-dark">{{ personal_health.medical_conditions if personal_health and personal_health.medical_conditions else 'None recorded' }}</span>
+                    </div>
+                    <div class="col-12">
+                        <span class="text-muted small d-block">Current Medications</span>
+                        <span class="text-dark">{{ personal_health.current_medications if personal_health and personal_health.current_medications else 'None recorded' }}</span>
+                    </div>
+                    <div class="col-12">
+                        <span class="text-muted small d-block">Preferred Hospital / Doctor</span>
+                        <span class="text-dark">{{ personal_health.preferred_hospital_doctor if personal_health and personal_health.preferred_hospital_doctor else 'Not set' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. EMERGENCY ACCESS -->
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4 border-start border-4 border-danger">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge bg-danger p-2 rounded-circle text-white"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                    <h5 class="fw-bold text-dark mb-0">Emergency Access</h5>
+                </div>
+                <p class="text-secondary small mb-3">
+                    Create a temporary, revocable link or QR code to allow emergency first responders to view your selected critical health information.
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="d-flex flex-column gap-2 mb-3">
+                    <button type="button" class="btn btn-outline-danger fw-semibold rounded-pill w-100" data-bs-toggle="modal" data-bs-target="#emergencyShareModal">
+                        <i class="bi bi-qr-code-scan me-2"></i>Generate Emergency QR & Link
+                    </button>
+                    {% if active_emergency_share %}
+                    <form action="{{ url_for('revoke_emergency_access') }}" method="POST" class="w-100">
+                        <button type="submit" class="btn btn-light text-danger border rounded-pill w-100 fw-semibold">
+                            <i class="bi bi-slash-circle me-2"></i>Revoke Emergency Access
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+
+                {% if active_emergency_share %}
+                <div class="p-3 bg-light rounded-3 border">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-success-subtle text-success fw-bold rounded-pill"><i class="bi bi-check-circle-fill me-1"></i>Active Emergency Link</span>
+                        <span class="text-muted small">Token: {{ active_emergency_share.token[:8] }}...</span>
+                    </div>
+                    <div class="input-group input-group-sm mb-2">
+                        <input type="text" class="form-control" id="activeEmergencyLinkInput" value="{{ request.host_url.rstrip('/') + url_for('view_emergency_access', token=active_emergency_share.token) }}" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyEmergencyLink()">Copy</button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-secondary mb-0 small text-muted text-center rounded-3">
+                    <i class="bi bi-info-circle me-1"></i>No active emergency share link. Click above to generate one.
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: DOCTOR SHARING, MEDICAL DOCUMENTS & CHECKUP REPORTS -->
+        <div class="col-12 col-lg-7">
+
+            <!-- 5. DOCTOR SHARING SECTION -->
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4 border-start border-4 border-primary">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 fw-bold">
+                                <i class="bi bi-hospital me-1"></i>Doctor Sharing
+                            </span>
+                            <span class="text-muted small">Patient-Controlled Access</span>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">👨‍⚕️ Doctor Sharing</h5>
+                        <p class="text-secondary small mb-0">Share selected health information with your doctor securely. Create a temporary secure link that allows your doctor to view the health information you choose to share. You can revoke access at any time.</p>
+                    </div>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#createDoctorShareModal">
+                        <i class="bi bi-plus-lg me-1"></i>Create Doctor Share Link
+                    </button>
+                </div>
+
+                <!-- ACTIVE SHARES LIST -->
+                <h6 class="fw-bold text-dark mt-3 mb-2"><i class="bi bi-link-45deg text-primary me-1"></i>Active Doctor Shares</h6>
+                {% if active_doctor_shares %}
+                    <div class="d-flex flex-column gap-3 mb-3">
+                        {% for share in active_doctor_shares %}
+                        <div class="p-3 bg-light rounded-4 border">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-2">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small fw-bold">
+                                            <i class="bi bi-check-circle-fill me-1"></i>Active Link
+                                        </span>
+                                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1 small">
+                                            {{ share.shared_count }} item{% if share.shared_count != 1 %}s{% endif %} shared
+                                        </span>
+                                    </div>
+                                    <div class="small text-muted mb-1">
+                                        <i class="bi bi-calendar3 me-1"></i>Created: {{ share.created_at }} | <i class="bi bi-clock me-1"></i>Expires: <strong class="text-danger">{{ share.formatted_expires }}</strong>
+                                    </div>
+                                    {% if share.last_accessed_at %}
+                                    <div class="small text-secondary">
+                                        <i class="bi bi-eye me-1"></i>Last accessed: <strong>{{ share.last_accessed_at }}</strong>
+                                    </div>
+                                    {% else %}
+                                    <div class="small text-muted fst-italic">
+                                        <i class="bi bi-eye-slash me-1"></i>Not accessed by doctor yet
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a href="{{ url_for('view_doctor_share', token=share.token) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                        <i class="bi bi-eye me-1"></i>View Details
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="copyDoctorLink('{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}')">
+                                        <i class="bi bi-clipboard me-1"></i>Copy Link
+                                    </button>
+                                    <form action="{{ url_for('revoke_doctor_share', share_id=share.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to revoke this doctor\'s access?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                            <i class="bi bi-slash-circle me-1"></i>Revoke
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="input-group input-group-sm mt-2">
+                                <input type="text" class="form-control" value="{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyDoctorLink('{{ request.host_url.rstrip('/') + url_for('view_doctor_share', token=share.token) }}')">Copy</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-light border rounded-3 small text-muted mb-3 text-center">
+                        <i class="bi bi-info-circle me-1"></i>No active doctor share links. Click <strong>"Create Doctor Share Link"</strong> above to generate one.
+                    </div>
+                {% endif %}
+
+                <!-- EXPIRED SHARES AUDIT -->
+                {% if expired_doctor_shares %}
+                    <a class="text-decoration-none small text-muted d-inline-flex align-items-center gap-1" data-bs-toggle="collapse" href="#expiredSharesCollapse" role="button" aria-expanded="false">
+                        <i class="bi bi-clock-history me-1"></i>View Expired Doctor Shares ({{ expired_doctor_shares|length }}) <i class="bi bi-chevron-down"></i>
+                    </a>
+                    <div class="collapse mt-2" id="expiredSharesCollapse">
+                        <div class="d-flex flex-column gap-2">
+                            {% for share in expired_doctor_shares %}
+                            <div class="p-2 bg-light rounded-3 border text-muted small d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-secondary rounded-pill me-1">Expired / Revoked</span>
+                                    <span>Created: {{ share.created_at }}</span>
+                                </div>
+                                <span class="fst-italic text-secondary">Token: {{ share.token[:8] }}...</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- 2. MEDICAL REPORTS (UPLOADS) -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-folder-fill text-primary me-2"></i>Medical Reports & Documents</h5>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">{{ documents|length }} Document{% if documents|length != 1 %}s{% endif %}</span>
+            </div>
+
+            {% if documents %}
+                <div class="row g-3 mb-4" id="medicalDocsContainer">
+                    {% for doc in documents %}
+                    <div class="col-12 col-md-6 doc-card-item" data-name="{{ doc.doc_name|lower }}" data-type="{{ doc.doc_type|lower }}" data-date="{{ doc.upload_date|lower }}">
+                        <div class="card border-0 shadow-sm rounded-4 bg-white p-3 h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 text-truncate" style="max-width: 140px;">
+                                        <i class="bi bi-tag-fill me-1"></i>{{ doc.doc_type }}
+                                    </span>
+                                    <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ doc.upload_date }}</span>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-1 text-truncate" title="{{ doc.doc_name }}">{{ doc.doc_name }}</h6>
+                                <p class="text-muted small mb-3 text-truncate">{{ doc.file_name }}</p>
+                            </div>
+                            <div class="d-flex gap-2 pt-2 border-top">
+                                <a href="{{ url_for('view_medical_document', doc_id=doc.id) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill flex-grow-1">
+                                    <i class="bi bi-eye me-1"></i>View
+                                </a>
+                                <a href="{{ url_for('download_medical_document', doc_id=doc.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1">
+                                    <i class="bi bi-download me-1"></i>Download
+                                </a>
+                                <form action="{{ url_for('delete_medical_document', doc_id=doc.id) }}" method="POST" onsubmit="return confirm('Delete this medical document?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- EMPTY STATE -->
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center mb-4" id="docsEmptyState">
+                    <div class="rounded-circle bg-primary-subtle text-primary p-4 d-inline-flex mx-auto mb-3">
+                        <i class="bi bi-folder-symlink-fill fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Your Health Locker is empty</h5>
+                    <p class="text-secondary max-width-500 mx-auto mb-4" style="max-width: 440px;">
+                        Store your important medical reports and health information here for easy access when you need them.
+                    </p>
+                    <div>
+                        <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
+                            <i class="bi bi-cloud-upload-fill me-2"></i>Upload Your First Report
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- 3. HEALTH CHECKUP REPORTS (VITASENSE GENERATED) -->
+            <div class="d-flex justify-content-between align-items-center mb-3 pt-2">
+                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-journal-medical text-primary me-2"></i>VitaSense Screening Reports</h5>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">{{ reports|length }} Screening{% if reports|length != 1 %}s{% endif %}</span>
+            </div>
+
+            {% if reports %}
+                <div class="d-flex flex-column gap-3 mb-4" id="checkupReportsContainer">
+                    {% for rep in reports %}
+                    <div class="card border-0 shadow-sm rounded-4 bg-white p-3 checkup-card-item" data-title="{{ rep.title|lower }}" data-date="{{ rep.created_at|lower }}" data-type="{{ rep.screening_type|lower }}">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small fw-bold">
+                                        <i class="bi bi-check-circle-fill me-1"></i>Checkup Complete
+                                    </span>
+                                    <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ rep.created_at }}</span>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-1">{{ rep.title }}</h6>
+                                <p class="text-muted small mb-0">{{ rep.screening_type }}</p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('view_report_results', report_id=rep.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    <i class="bi bi-file-earmark-text me-1"></i>View Results
+                                </a>
+                                {% if rep.pdf_path %}
+                                <a href="{{ url_for('download_report_pdf', report_id=rep.id) }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-4 text-center mb-4">
+                    <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>No VitaSense screening reports generated yet. Start a checkup from Home!</p>
+                </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CREATE DOCTOR SHARE LINK MODAL WIZARD -->
+<div class="modal fade" id="createDoctorShareModal" tabindex="-1" aria-labelledby="createDoctorShareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark" id="createDoctorShareModalLabel">
+                    <i class="bi bi-hospital text-primary me-2"></i>Create Doctor Share Link
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form action="{{ url_for('create_doctor_share') }}" method="POST">
+                
+                <!-- Nav tabs for 2-step wizard -->
+                <ul class="nav nav-tabs border-0 px-4 mt-2" id="doctorShareTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-semibold" id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1Pane" type="button" role="tab">
+                            Step 1: Select Information
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold" id="step2-tab" data-bs-toggle="tab" data-bs-target="#step2Pane" type="button" role="tab">
+                            Step 2: Access Duration
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content modal-body py-4" id="doctorShareTabContent">
+                    
+                    <!-- STEP 1: SELECT INFORMATION -->
+                    <div class="tab-pane fade show active" id="step1Pane" role="tabpanel">
+                        <h6 class="fw-bold text-dark mb-2">What would you like to share?</h6>
+                        <p class="text-secondary small mb-3">Select the specific health items you want your doctor to be able to view. Nothing is selected automatically.</p>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-6">
+                                <div class="form-check p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input" type="checkbox" name="shared_items" value="personal_info" id="sharePersonalInfo">
+                                    <label class="form-check-label fw-semibold text-dark d-block ms-1" for="sharePersonalInfo">
+                                        Personal Health Information
+                                    </label>
+                                    <span class="text-muted small ms-1">Name, Date of birth, Emergency contact</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-check p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input" type="checkbox" name="shared_items" value="allergies" id="shareAllergies">
+                                    <label class="form-check-label fw-semibold text-dark d-block ms-1" for="shareAllergies">
+                                        Allergies
+                                    </label>
+                                    <span class="text-muted small ms-1">Known allergy reactions & drugs</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-check p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input" type="checkbox" name="shared_items" value="medications" id="shareMedications">
+                                    <label class="form-check-label fw-semibold text-dark d-block ms-1" for="shareMedications">
+                                        Current Medications
+                                    </label>
+                                    <span class="text-muted small ms-1">Prescriptions & active supplements</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-check p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input" type="checkbox" name="shared_items" value="conditions" id="shareConditions">
+                                    <label class="form-check-label fw-semibold text-dark d-block ms-1" for="shareConditions">
+                                        Medical Conditions
+                                    </label>
+                                    <span class="text-muted small ms-1">Chronic or diagnosed conditions</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-check p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input" type="checkbox" name="shared_items" value="blood_group" id="shareBloodGroupDoc">
+                                    <label class="form-check-label fw-semibold text-dark d-block ms-1" for="shareBloodGroupDoc">
+                                        Blood Group
+                                    </label>
+                                    <span class="text-muted small ms-1">Blood group type</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-check p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input" type="checkbox" name="shared_items" value="screening_reports" id="shareScreeningReports">
+                                    <label class="form-check-label fw-semibold text-dark d-block ms-1" for="shareScreeningReports">
+                                        Previous Screening Reports
+                                    </label>
+                                    <span class="text-muted small ms-1">Prior health assessment summaries</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-check p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input" type="checkbox" name="shared_items" value="lab_reports" id="shareLabReports">
+                                    <label class="form-check-label fw-semibold text-dark d-block ms-1" for="shareLabReports">
+                                        Laboratory Reports
+                                    </label>
+                                    <span class="text-muted small ms-1">Blood test, CBC, Vitamin, Thyroid labs</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-check p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input" type="checkbox" name="shared_items" value="vitasense_reports" id="shareVitasenseReports">
+                                    <label class="form-check-label fw-semibold text-dark d-block ms-1" for="shareVitasenseReports">
+                                        VitaSense Checkup Reports
+                                    </label>
+                                    <span class="text-muted small ms-1">Multimodal risk assessment & PDFs</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-check p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input" type="checkbox" name="shared_items" value="health_history" id="shareHealthHistory">
+                                    <label class="form-check-label fw-semibold text-dark d-block ms-1" for="shareHealthHistory">
+                                        Health History
+                                    </label>
+                                    <span class="text-muted small ms-1">Historical screening timeline</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-check p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input" type="checkbox" name="shared_items" value="medical_documents" id="shareMedicalDocs">
+                                    <label class="form-check-label fw-semibold text-dark d-block ms-1" for="shareMedicalDocs">
+                                        Other Medical Documents
+                                    </label>
+                                    <span class="text-muted small ms-1">User uploaded prescriptions & files</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold" onclick="document.getElementById('step2-tab').click();">
+                                Continue to Access Duration <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: ACCESS DURATION -->
+                    <div class="tab-pane fade" id="step2Pane" role="tabpanel">
+                        <h6 class="fw-bold text-dark mb-2">How long should this link remain active?</h6>
+                        <p class="text-secondary small mb-3">Access automatically expires after the selected duration.</p>
+
+                        <div class="d-flex flex-column gap-3 mb-4">
+                            <div class="form-check p-3 bg-light rounded-3 border">
+                                <input class="form-check-input" type="radio" name="duration_option" id="dur1h" value="1">
+                                <label class="form-check-label fw-semibold text-dark ms-1" for="dur1h">
+                                    1 Hour
+                                </label>
+                                <div class="text-muted small ms-1">Best for single in-person consultation</div>
+                            </div>
+                            <div class="form-check p-3 bg-light rounded-3 border">
+                                <input class="form-check-input" type="radio" name="duration_option" id="dur6h" value="6">
+                                <label class="form-check-label fw-semibold text-dark ms-1" for="dur6h">
+                                    6 Hours
+                                </label>
+                                <div class="text-muted small ms-1">Good for day appointments</div>
+                            </div>
+                            <div class="form-check p-3 bg-light rounded-3 border">
+                                <input class="form-check-input" type="radio" name="duration_option" id="dur24h" value="24" checked>
+                                <label class="form-check-label fw-semibold text-dark ms-1" for="dur24h">
+                                    24 Hours (Default)
+                                </label>
+                                <div class="text-muted small ms-1">Standard full day access</div>
+                            </div>
+                            <div class="form-check p-3 bg-light rounded-3 border">
+                                <input class="form-check-input" type="radio" name="duration_option" id="dur7d" value="168">
+                                <label class="form-check-label fw-semibold text-dark ms-1" for="dur7d">
+                                    7 Days
+                                </label>
+                                <div class="text-muted small ms-1">Extended follow-up review</div>
+                            </div>
+                            <div class="form-check p-3 bg-light rounded-3 border">
+                                <input class="form-check-input" type="radio" name="duration_option" id="durCustom" value="custom">
+                                <label class="form-check-label fw-semibold text-dark ms-1" for="durCustom">
+                                    Custom Duration
+                                </label>
+                                <div class="mt-2 ms-1" id="customDurationBox" style="display: none;">
+                                    <div class="input-group input-group-sm" style="max-width: 200px;">
+                                        <input type="number" class="form-control" name="custom_hours" min="1" max="720" value="48">
+                                        <span class="input-group-text">Hours</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between border-top pt-3">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="document.getElementById('step1-tab').click();">
+                                <i class="bi bi-arrow-left me-1"></i>Back to Selection
+                            </button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                                <i class="bi bi-shield-check me-1"></i>Generate Secure Link
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- UPLOAD DOCUMENT MODAL -->
+<div class="modal fade" id="uploadDocModal" tabindex="-1" aria-labelledby="uploadDocModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark" id="uploadDocModalLabel">
+                    <i class="bi bi-cloud-arrow-up-fill text-primary me-2"></i>Upload Medical Document
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('upload_medical_document') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body py-4">
+                    <div class="mb-3">
+                        <label for="docName" class="form-label fw-semibold text-dark">Document Name / Title</label>
+                        <input type="text" class="form-control rounded-3" id="docName" name="doc_name" placeholder="e.g. Complete Blood Count (CBC) Report" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="docType" class="form-label fw-semibold text-dark">Document Type</label>
+                        <select class="form-select rounded-3" id="docType" name="doc_type" required>
+                            <option value="Blood test report">Blood Test Report</option>
+                            <option value="CBC report">CBC Report</option>
+                            <option value="Vitamin test report">Vitamin Test Report</option>
+                            <option value="Thyroid report">Thyroid Report</option>
+                            <option value="Diabetes report">Diabetes Report</option>
+                            <option value="Doctor prescription">Doctor Prescription</option>
+                            <option value="Other laboratory report">Other Laboratory Report</option>
+                            <option value="Medical document">Medical Document</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="documentFile" class="form-label fw-semibold text-dark">Select File (PDF, JPG, PNG)</label>
+                        <input class="form-control rounded-3" type="file" id="documentFile" name="document_file" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <div class="form-text">Maximum file size: 16 MB. Formats: PDF, JPG, PNG.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                        <i class="bi bi-upload me-1"></i>Upload Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT HEALTH INFORMATION MODAL -->
+<div class="modal fade" id="editHealthInfoModal" tabindex="-1" aria-labelledby="editHealthInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark" id="editHealthInfoModalLabel">
+                    <i class="bi bi-pencil-square text-primary me-2"></i>Update Personal Health Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('update_personal_health_info') }}" method="POST">
+                <div class="modal-body py-4">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="fullName" class="form-label fw-semibold text-dark">Full Name</label>
+                            <input type="text" class="form-control rounded-3" id="fullName" name="full_name" value="{{ personal_health.full_name if personal_health and personal_health.full_name else user.username }}">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="dob" class="form-label fw-semibold text-dark">Date of Birth</label>
+                            <input type="date" class="form-control rounded-3" id="dob" name="dob" value="{{ personal_health.dob if personal_health else '' }}">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="bloodGroup" class="form-label fw-semibold text-dark">Blood Group</label>
+                            <select class="form-select rounded-3" id="bloodGroup" name="blood_group">
+                                <option value="" {% if not personal_health or not personal_health.blood_group %}selected{% endif %}>Select Blood Group</option>
+                                <option value="A+" {% if personal_health and personal_health.blood_group == 'A+' %}selected{% endif %}>A+</option>
+                                <option value="A-" {% if personal_health and personal_health.blood_group == 'A-' %}selected{% endif %}>A-</option>
+                                <option value="B+" {% if personal_health and personal_health.blood_group == 'B+' %}selected{% endif %}>B+</option>
+                                <option value="B-" {% if personal_health and personal_health.blood_group == 'B-' %}selected{% endif %}>B-</option>
+                                <option value="O+" {% if personal_health and personal_health.blood_group == 'O+' %}selected{% endif %}>O+</option>
+                                <option value="O-" {% if personal_health and personal_health.blood_group == 'O-' %}selected{% endif %}>O-</option>
+                                <option value="AB+" {% if personal_health and personal_health.blood_group == 'AB+' %}selected{% endif %}>AB+</option>
+                                <option value="AB-" {% if personal_health and personal_health.blood_group == 'AB-' %}selected{% endif %}>AB-</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="emergencyContact" class="form-label fw-semibold text-dark">Emergency Contact Number</label>
+                            <input type="text" class="form-control rounded-3" id="emergencyContact" name="emergency_contact" placeholder="+1 (555) 000-0000" value="{{ personal_health.emergency_contact if personal_health else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label for="knownAllergies" class="form-label fw-semibold text-dark">Known Allergies</label>
+                            <input type="text" class="form-control rounded-3" id="knownAllergies" name="known_allergies" placeholder="e.g. Penicillin, Peanuts, Latex" value="{{ personal_health.known_allergies if personal_health else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label for="medicalConditions" class="form-label fw-semibold text-dark">Important Medical Conditions</label>
+                            <input type="text" class="form-control rounded-3" id="medicalConditions" name="medical_conditions" placeholder="e.g. Type 2 Diabetes, Hypertension, Asthma" value="{{ personal_health.medical_conditions if personal_health else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label for="currentMedications" class="form-label fw-semibold text-dark">Current Medications</label>
+                            <input type="text" class="form-control rounded-3" id="currentMedications" name="current_medications" placeholder="e.g. Metformin 500mg, Vitamin B12 supplements" value="{{ personal_health.current_medications if personal_health else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label for="preferredHospitalDoctor" class="form-label fw-semibold text-dark">Preferred Hospital / Doctor</label>
+                            <input type="text" class="form-control rounded-3" id="preferredHospitalDoctor" name="preferred_hospital_doctor" placeholder="e.g. City General Hospital - Dr. Sarah Jenkins" value="{{ personal_health.preferred_hospital_doctor if personal_health else '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Save Details</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EMERGENCY SHARE MODAL -->
+<div class="modal fade" id="emergencyShareModal" tabindex="-1" aria-labelledby="emergencyShareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark" id="emergencyShareModalLabel">
+                    <i class="bi bi-shield-check text-danger me-2"></i>Configure Emergency Access
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('generate_emergency_access') }}" method="POST">
+                <div class="modal-body py-4">
+                    <p class="text-secondary small mb-3">
+                        Select which health information items you want to make visible to first responders accessing your emergency link:
+                    </p>
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="shared_items" value="blood_group" id="shareBloodGroup" checked>
+                            <label class="form-check-label text-dark fw-semibold" for="shareBloodGroup">Blood Group</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="shared_items" value="emergency_contact" id="shareContact" checked>
+                            <label class="form-check-label text-dark fw-semibold" for="shareContact">Emergency Contact Number</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="shared_items" value="allergies" id="shareAllergiesEm" checked>
+                            <label class="form-check-label text-dark fw-semibold" for="shareAllergiesEm">Known Allergies</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="shared_items" value="conditions" id="shareConditionsEm" checked>
+                            <label class="form-check-label text-dark fw-semibold" for="shareConditionsEm">Important Medical Conditions</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="shared_items" value="medications" id="shareMedicationsEm" checked>
+                            <label class="form-check-label text-dark fw-semibold" for="shareMedicationsEm">Current Medications</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">
+                        <i class="bi bi-qr-code me-1"></i>Generate Emergency Access Link
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Client-side search filter
+    const searchInput = document.getElementById('lockerSearchInput');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', filterRecords);
+    }
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            if (searchInput) {
+                searchInput.value = '';
+                filterRecords();
+            }
+        });
+    }
+
+    function filterRecords() {
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        
+        const docItems = document.querySelectorAll('.doc-card-item');
+        docItems.forEach(item => {
+            const name = item.getAttribute('data-name') || '';
+            const type = item.getAttribute('data-type') || '';
+            const date = item.getAttribute('data-date') || '';
+            if (name.includes(query) || type.includes(query) || date.includes(query)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        const checkupItems = document.querySelectorAll('.checkup-card-item');
+        checkupItems.forEach(item => {
+            const title = item.getAttribute('data-title') || '';
+            const date = item.getAttribute('data-date') || '';
+            const type = item.getAttribute('data-type') || '';
+            if (title.includes(query) || date.includes(query) || type.includes(query)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    // Custom duration radio toggle
+    const customRadio = document.getElementById('durCustom');
+    const customBox = document.getElementById('customDurationBox');
+    const durationRadios = document.getElementsByName('duration_option');
+
+    durationRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (customRadio.checked) {
+                customBox.style.display = 'block';
+            } else {
+                customBox.style.display = 'none';
+            }
+        });
+    });
+});
+
+function copyEmergencyLink() {
+    const copyText = document.getElementById('activeEmergencyLinkInput');
+    if (copyText) {
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value);
+        alert('Emergency access link copied to clipboard!');
+    }
+}
+
+function copyDoctorLink(url) {
+    navigator.clipboard.writeText(url);
+    alert('Secure Doctor Share link copied to clipboard!');
+}
+</script>
+{% endblock %}

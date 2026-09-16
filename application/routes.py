@@ -6,7 +6,8 @@ import requests
 from flask import render_template, redirect, url_for, request, session, flash, send_from_directory, abort, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from application import app, google, Session
-from application.models import User, UserProfile, HealthReport, ClinicalRoom, RoomMember
+from application.models import User, UserProfile, HealthReport, UserPersonalHealth, MedicalDocument, EmergencyAccessShare, DoctorShare
+import time
 
 @app.route('/')
 @login_required
@@ -20,14 +21,6 @@ def index():
         reports = db_session.query(HealthReport).filter_by(user_id=current_user.id).order_by(HealthReport.id.desc()).all()
         for r in reports:
             db_session.expunge(r)
-
-        # Fetch clinical room for user if exists
-        user_member = db_session.query(RoomMember).filter_by(user_id=current_user.id).first()
-        user_room = None
-        if user_member:
-            user_room = db_session.get(ClinicalRoom, user_member.room_id)
-            if user_room:
-                db_session.expunge(user_room)
 
     if not profile or not profile.onboarding_completed:
         return redirect(url_for('onboarding'))
@@ -45,8 +38,7 @@ def index():
         latest_report=latest_report,
         recent_reports=recent_reports,
         has_screenings=has_screenings,
-        has_lab_report=has_lab_report,
-        user_room=user_room
+        has_lab_report=has_lab_report
     )
 
 @app.route('/login')
@@ -613,158 +605,442 @@ def profile():
 
     return render_template('profile.html', profile=user_profile)
 
-# ================= Clinical Doctor Room Routes =================
+# ==================================================
+# HEALTH LOCKER & DOCTOR SHARING ROUTES
+# ==================================================
 
-@app.route('/room/create', methods=['POST'])
+@app.route('/health-locker')
 @login_required
-def create_room():
-    room_name = request.form.get('room_name', '').strip()
-    description = request.form.get('description', '').strip()
-
-    if not room_name:
-        room_name = f"Dr. {current_user.username.capitalize()}'s Clinical Room"
-
-    room_code = f"DOC-{uuid.uuid4().hex[:6].upper()}"
-    formatted_date = datetime.now().strftime("%b %d, %Y")
-
+def health_locker():
+    now_ts = time.time()
     with Session() as db_session:
-        new_room = ClinicalRoom(
-            doctor_id=current_user.id,
-            name=room_name,
-            code=room_code,
-            description=description,
-            created_at=formatted_date
-        )
-        db_session.add(new_room)
-        db_session.commit()
-        db_session.refresh(new_room)
+        personal_health = db_session.query(UserPersonalHealth).filter_by(user_id=current_user.id).first()
+        if personal_health:
+            db_session.expunge(personal_health)
 
-        # Add doctor as room member
-        doc_member = RoomMember(
-            room_id=new_room.id,
-            user_id=current_user.id,
-            role='doctor',
-            joined_at=formatted_date
-        )
-        db_session.add(doc_member)
-        db_session.commit()
-        room_id = new_room.id
+        documents = db_session.query(MedicalDocument).filter_by(user_id=current_user.id).order_by(MedicalDocument.id.desc()).all()
+        for d in documents:
+            db_session.expunge(d)
 
-    flash(f"Clinical Room '{room_name}' created! Code: {room_code}", "success")
-    return redirect(url_for('view_room', room_id=room_id))
+        reports = db_session.query(HealthReport).filter_by(user_id=current_user.id).order_by(HealthReport.id.desc()).all()
+        for r in reports:
+            db_session.expunge(r)
 
-@app.route('/room/join', methods=['POST'])
-@login_required
-def join_room():
-    room_code = request.form.get('room_code', '').strip().upper()
-    if not room_code:
-        flash("Please enter a valid Room Code.", "warning")
-        return redirect(url_for('index'))
+        active_emergency_share = db_session.query(EmergencyAccessShare).filter_by(user_id=current_user.id, is_revoked=False).order_by(EmergencyAccessShare.id.desc()).first()
+        if active_emergency_share:
+            db_session.expunge(active_emergency_share)
 
-    formatted_date = datetime.now().strftime("%b %d, %Y")
-
-    with Session() as db_session:
-        room = db_session.query(ClinicalRoom).filter_by(code=room_code).first()
-        if not room:
-            flash(f"No clinical room found with code '{room_code}'. Please check code and try again.", "danger")
-            return redirect(url_for('index'))
-
-        existing_member = db_session.query(RoomMember).filter_by(room_id=room.id, user_id=current_user.id).first()
-        if not existing_member:
-            new_member = RoomMember(
-                room_id=room.id,
-                user_id=current_user.id,
-                role='patient',
-                joined_at=formatted_date
-            )
-            db_session.add(new_member)
-            db_session.commit()
-            flash(f"Successfully joined clinical room '{room.name}'!", "success")
-        else:
-            flash(f"You are already a member of '{room.name}'.", "info")
-
-        room_id = room.id
-
-    return redirect(url_for('view_room', room_id=room_id))
-
-@app.route('/room/<int:room_id>')
-@login_required
-def view_room(room_id):
-    with Session() as db_session:
-        room = db_session.get(ClinicalRoom, room_id)
-        if not room:
-            flash("Clinical Room not found.", "warning")
-            return redirect(url_for('index'))
-
-        members = db_session.query(RoomMember).filter_by(room_id=room.id).all()
-        member_user_ids = [m.user_id for m in members]
+        all_doc_shares = db_session.query(DoctorShare).filter_by(user_id=current_user.id).order_by(DoctorShare.id.desc()).all()
         
-        users_list = db_session.query(User).filter(User.id.in_(member_user_ids)).all()
-        users_map = {u.id: u for u in users_list}
-        doctor_user = users_map.get(room.doctor_id)
+        active_doctor_shares = []
+        expired_doctor_shares = []
+        for ds in all_doc_shares:
+            db_session.expunge(ds)
+            try:
+                items = json.loads(ds.shared_sections_json)
+                ds.shared_count = len(items)
+            except Exception:
+                ds.shared_count = 0
+            
+            # Format expiration date
+            exp_dt = datetime.fromtimestamp(ds.expires_at_timestamp)
+            ds.formatted_expires = exp_dt.strftime("%b %d, %Y %I:%M %p")
 
-        # Collect all health reports for room members (patients)
-        member_reports = {}
-        for uid in member_user_ids:
-            reps = db_session.query(HealthReport).filter_by(user_id=uid).order_by(HealthReport.id.desc()).all()
-            for r in reps:
-                db_session.expunge(r)
-            member_reports[uid] = reps
-
-        is_member = current_user.id in member_user_ids
-        is_doctor = (current_user.id == room.doctor_id)
-        db_session.expunge(room)
-
-    if not is_member:
-        flash("You are not a member of this clinical room.", "danger")
-        return redirect(url_for('index'))
+            if not ds.is_revoked and now_ts < ds.expires_at_timestamp:
+                active_doctor_shares.append(ds)
+            else:
+                expired_doctor_shares.append(ds)
 
     return render_template(
-        'room_dashboard.html',
-        room=room,
-        members=members,
-        users_map=users_map,
-        doctor_user=doctor_user,
-        member_reports=member_reports,
-        is_doctor=is_doctor
+        'health_locker.html',
+        user=current_user,
+        personal_health=personal_health,
+        documents=documents,
+        reports=reports,
+        active_emergency_share=active_emergency_share,
+        active_doctor_shares=active_doctor_shares,
+        expired_doctor_shares=expired_doctor_shares
     )
 
-@app.route('/room/<int:room_id>/add-patient', methods=['POST'])
+@app.route('/health-locker/update-personal-info', methods=['POST'])
 @login_required
-def add_patient_to_room(room_id):
-    email = request.form.get('patient_email', '').strip().lower()
-    if not email:
-        flash("Please enter a patient email address.", "warning")
-        return redirect(url_for('view_room', room_id=room_id))
-
-    formatted_date = datetime.now().strftime("%b %d, %Y")
+def update_personal_health_info():
+    full_name = request.form.get('full_name', '').strip()
+    dob = request.form.get('dob', '').strip()
+    blood_group = request.form.get('blood_group', '').strip()
+    emergency_contact = request.form.get('emergency_contact', '').strip()
+    known_allergies = request.form.get('known_allergies', '').strip()
+    medical_conditions = request.form.get('medical_conditions', '').strip()
+    current_medications = request.form.get('current_medications', '').strip()
+    preferred_hospital_doctor = request.form.get('preferred_hospital_doctor', '').strip()
 
     with Session() as db_session:
-        room = db_session.get(ClinicalRoom, room_id)
-        if not room or room.doctor_id != current_user.id:
-            flash("Only the room doctor can add patients by email.", "danger")
-            return redirect(url_for('index'))
+        ph = db_session.query(UserPersonalHealth).filter_by(user_id=current_user.id).first()
+        if not ph:
+            ph = UserPersonalHealth(user_id=current_user.id)
+            db_session.add(ph)
 
-        patient_user = db_session.query(User).filter_by(email=email).first()
-        if not patient_user:
-            flash(f"No registered user found with email '{email}'. Make sure patient has an account.", "warning")
-            return redirect(url_for('view_room', room_id=room_id))
+        ph.full_name = full_name
+        ph.dob = dob
+        ph.blood_group = blood_group
+        ph.emergency_contact = emergency_contact
+        ph.known_allergies = known_allergies
+        ph.medical_conditions = medical_conditions
+        ph.current_medications = current_medications
+        ph.preferred_hospital_doctor = preferred_hospital_doctor
+        db_session.commit()
 
-        existing_member = db_session.query(RoomMember).filter_by(room_id=room_id, user_id=patient_user.id).first()
-        if existing_member:
-            flash(f"Patient ({email}) is already in this room.", "info")
-        else:
-            new_member = RoomMember(
-                room_id=room_id,
-                user_id=patient_user.id,
-                role='patient',
-                joined_at=formatted_date
-            )
-            db_session.add(new_member)
-            db_session.commit()
-            flash(f"Patient ({patient_user.username or email}) successfully added to room!", "success")
+    flash("Personal health details updated successfully.", "success")
+    return redirect(url_for('health_locker'))
 
-    return redirect(url_for('view_room', room_id=room_id))
+@app.route('/health-locker/upload', methods=['POST'])
+@login_required
+def upload_medical_document():
+    doc_name = request.form.get('doc_name', '').strip()
+    doc_type = request.form.get('doc_type', 'Medical document').strip()
+    file_obj = request.files.get('document_file')
+
+    if not doc_name or not file_obj or not file_obj.filename:
+        flash("Please provide a document title and select a valid file.", "warning")
+        return redirect(url_for('health_locker'))
+
+    ext = os.path.splitext(file_obj.filename)[1].lower()
+    allowed_exts = ['.pdf', '.jpg', '.jpeg', '.png']
+    if ext not in allowed_exts:
+        flash("Unsupported file format. Please upload PDF, JPG, or PNG files.", "danger")
+        return redirect(url_for('health_locker'))
+
+    locker_dir = os.path.join(app.root_path, 'uploads', 'locker', str(current_user.id))
+    os.makedirs(locker_dir, exist_ok=True)
+
+    unique_filename = f"{uuid.uuid4().hex[:10]}_{file_obj.filename}"
+    full_save_path = os.path.join(locker_dir, unique_filename)
+    file_obj.save(full_save_path)
+
+    relative_file_path = os.path.join('application', 'uploads', 'locker', str(current_user.id), unique_filename)
+    formatted_date = datetime.now().strftime("%d %b %Y")
+
+    with Session() as db_session:
+        new_doc = MedicalDocument(
+            user_id=current_user.id,
+            doc_name=doc_name,
+            doc_type=doc_type,
+            file_path=relative_file_path,
+            file_name=file_obj.filename,
+            upload_date=formatted_date
+        )
+        db_session.add(new_doc)
+        db_session.commit()
+
+    flash(f"Document '{doc_name}' uploaded successfully to your Health Locker.", "success")
+    return redirect(url_for('health_locker'))
+
+@app.route('/health-locker/document/<int:doc_id>/view')
+@login_required
+def view_medical_document(doc_id):
+    with Session() as db_session:
+        doc = db_session.get(MedicalDocument, doc_id)
+        if not doc or doc.user_id != current_user.id:
+            flash("Document not found or unauthorized access.", "danger")
+            return redirect(url_for('health_locker'))
+        db_session.expunge(doc)
+
+    full_path = os.path.join(app.root_path, '..', doc.file_path)
+    if not os.path.exists(full_path):
+        flash("Document file not found on server.", "warning")
+        return redirect(url_for('health_locker'))
+
+    return send_from_directory(os.path.dirname(full_path), os.path.basename(full_path), as_attachment=False)
+
+@app.route('/health-locker/document/<int:doc_id>/download')
+@login_required
+def download_medical_document(doc_id):
+    with Session() as db_session:
+        doc = db_session.get(MedicalDocument, doc_id)
+        if not doc or doc.user_id != current_user.id:
+            flash("Document not found or unauthorized access.", "danger")
+            return redirect(url_for('health_locker'))
+        db_session.expunge(doc)
+
+    full_path = os.path.join(app.root_path, '..', doc.file_path)
+    if not os.path.exists(full_path):
+        flash("Document file not found on server.", "warning")
+        return redirect(url_for('health_locker'))
+
+    return send_from_directory(os.path.dirname(full_path), os.path.basename(full_path), as_attachment=True, download_name=doc.file_name)
+
+@app.route('/health-locker/document/<int:doc_id>/delete', methods=['POST'])
+@login_required
+def delete_medical_document(doc_id):
+    with Session() as db_session:
+        doc = db_session.get(MedicalDocument, doc_id)
+        if not doc or doc.user_id != current_user.id:
+            flash("Document not found or unauthorized.", "danger")
+            return redirect(url_for('health_locker'))
+
+        full_path = os.path.join(app.root_path, '..', doc.file_path)
+        if os.path.exists(full_path):
+            try:
+                os.remove(full_path)
+            except Exception:
+                pass
+
+        doc_name = doc.doc_name
+        db_session.delete(doc)
+        db_session.commit()
+
+    flash(f"Document '{doc_name}' has been deleted from your Health Locker.", "info")
+    return redirect(url_for('health_locker'))
+
+@app.route('/health-locker/emergency-access/generate', methods=['POST'])
+@login_required
+def generate_emergency_access():
+    shared_items = request.form.getlist('shared_items')
+    formatted_date = datetime.now().strftime("%b %d, %Y %I:%M %p")
+    new_token = uuid.uuid4().hex
+
+    with Session() as db_session:
+        active_shares = db_session.query(EmergencyAccessShare).filter_by(user_id=current_user.id, is_revoked=False).all()
+        for share in active_shares:
+            share.is_revoked = True
+
+        new_share = EmergencyAccessShare(
+            user_id=current_user.id,
+            token=new_token,
+            shared_sections_json=json.dumps(shared_items),
+            is_revoked=False,
+            created_at=formatted_date
+        )
+        db_session.add(new_share)
+        db_session.commit()
+
+    flash("Emergency access link generated successfully!", "success")
+    return redirect(url_for('health_locker'))
+
+@app.route('/health-locker/emergency-access/revoke', methods=['POST'])
+@login_required
+def revoke_emergency_access():
+    with Session() as db_session:
+        active_shares = db_session.query(EmergencyAccessShare).filter_by(user_id=current_user.id, is_revoked=False).all()
+        for share in active_shares:
+            share.is_revoked = True
+        db_session.commit()
+
+    flash("Emergency access link has been revoked.", "info")
+    return redirect(url_for('health_locker'))
+
+@app.route('/emergency-access/<string:token>')
+def view_emergency_access(token):
+    with Session() as db_session:
+        share = db_session.query(EmergencyAccessShare).filter_by(token=token).first()
+        if not share or share.is_revoked:
+            return render_template('emergency_view.html', is_revoked=True, share=None)
+
+        db_session.expunge(share)
+        patient_user = db_session.get(User, share.user_id)
+        if patient_user:
+            db_session.expunge(patient_user)
+
+        personal_health = db_session.query(UserPersonalHealth).filter_by(user_id=share.user_id).first()
+        if personal_health:
+            db_session.expunge(personal_health)
+
+    patient_name = personal_health.full_name if (personal_health and personal_health.full_name) else (patient_user.username if patient_user else "Patient")
+    try:
+        shared_items = json.loads(share.shared_sections_json)
+    except Exception:
+        shared_items = []
+
+    return render_template(
+        'emergency_view.html',
+        is_revoked=False,
+        share=share,
+        personal_health=personal_health,
+        patient_name=patient_name,
+        shared_items=shared_items
+    )
+
+# ==================================================
+# DOCTOR SHARING ENDPOINTS
+# ==================================================
+
+@app.route('/health-locker/doctor-share/create', methods=['POST'])
+@login_required
+def create_doctor_share():
+    shared_items = request.form.getlist('shared_items')
+    if not shared_items:
+        flash("Please select at least one item to share with your doctor.", "warning")
+        return redirect(url_for('health_locker'))
+
+    duration_option = request.form.get('duration_option', '24')
+    if duration_option == 'custom':
+        try:
+            duration_hours = float(request.form.get('custom_hours', '24'))
+        except ValueError:
+            duration_hours = 24.0
+    else:
+        try:
+            duration_hours = float(duration_option)
+        except ValueError:
+            duration_hours = 24.0
+
+    now = datetime.now()
+    now_ts = time.time()
+    expires_at_ts = now_ts + (duration_hours * 3600.0)
+    formatted_created = now.strftime("%b %d, %Y %I:%M %p")
+    new_token = uuid.uuid4().hex
+
+    with Session() as db_session:
+        new_share = DoctorShare(
+            user_id=current_user.id,
+            token=new_token,
+            shared_sections_json=json.dumps(shared_items),
+            duration_hours=duration_hours,
+            created_at=formatted_created,
+            expires_at_timestamp=expires_at_ts,
+            is_revoked=False
+        )
+        db_session.add(new_share)
+        db_session.commit()
+
+    flash("Doctor Share link created successfully! Copy or share the link with your doctor.", "success")
+    return redirect(url_for('health_locker'))
+
+@app.route('/health-locker/doctor-share/<int:share_id>/revoke', methods=['POST'])
+@login_required
+def revoke_doctor_share(share_id):
+    with Session() as db_session:
+        share = db_session.get(DoctorShare, share_id)
+        if not share or share.user_id != current_user.id:
+            flash("Doctor share link not found or unauthorized.", "danger")
+            return redirect(url_for('health_locker'))
+
+        share.is_revoked = True
+        db_session.commit()
+
+    flash("Doctor access has been revoked. The link is no longer usable.", "info")
+    return redirect(url_for('health_locker'))
+
+@app.route('/doctor-share/<string:token>')
+def view_doctor_share(token):
+    now_ts = time.time()
+    now_str = datetime.now().strftime("%b %d, %Y %I:%M %p")
+
+    with Session() as db_session:
+        share = db_session.query(DoctorShare).filter_by(token=token).first()
+        if not share or share.is_revoked:
+            return render_template('doctor_share_view.html', is_revoked=True, is_expired=False, share=None)
+
+        if now_ts >= share.expires_at_timestamp:
+            return render_template('doctor_share_view.html', is_revoked=False, is_expired=True, share=None)
+
+        # Audit log update: record last accessed timestamp
+        share.last_accessed_at = now_str
+        db_session.commit()
+        db_session.refresh(share)
+
+        db_session.expunge(share)
+        patient_user = db_session.get(User, share.user_id)
+        if patient_user:
+            db_session.expunge(patient_user)
+
+        personal_health = db_session.query(UserPersonalHealth).filter_by(user_id=share.user_id).first()
+        if personal_health:
+            db_session.expunge(personal_health)
+
+        reports = db_session.query(HealthReport).filter_by(user_id=share.user_id).order_by(HealthReport.id.desc()).all()
+        for r in reports:
+            db_session.expunge(r)
+
+        documents = db_session.query(MedicalDocument).filter_by(user_id=share.user_id).order_by(MedicalDocument.id.desc()).all()
+        for d in documents:
+            db_session.expunge(d)
+
+    patient_name = personal_health.full_name if (personal_health and personal_health.full_name) else (patient_user.username if patient_user else "Patient")
+    try:
+        shared_items = json.loads(share.shared_sections_json)
+    except Exception:
+        shared_items = []
+
+    exp_dt = datetime.fromtimestamp(share.expires_at_timestamp)
+    formatted_expires_at = exp_dt.strftime("%b %d, %Y %I:%M %p")
+
+    return render_template(
+        'doctor_share_view.html',
+        is_revoked=False,
+        is_expired=False,
+        share=share,
+        patient_name=patient_name,
+        personal_health=personal_health,
+        reports=reports,
+        documents=documents,
+        shared_items=shared_items,
+        formatted_expires_at=formatted_expires_at
+    )
+
+@app.route('/doctor-share/<string:token>/document/<int:doc_id>/view')
+def view_shared_doctor_document(token, doc_id):
+    now_ts = time.time()
+    with Session() as db_session:
+        share = db_session.query(DoctorShare).filter_by(token=token).first()
+        if not share or share.is_revoked or now_ts >= share.expires_at_timestamp:
+            flash("Doctor sharing link is invalid or expired.", "danger")
+            return redirect(url_for('login'))
+
+        doc = db_session.get(MedicalDocument, doc_id)
+        if not doc or doc.user_id != share.user_id:
+            flash("Document not found or unauthorized.", "danger")
+            return redirect(url_for('login'))
+
+        try:
+            shared_items = json.loads(share.shared_sections_json)
+        except Exception:
+            shared_items = []
+
+        if 'lab_reports' not in shared_items and 'medical_documents' not in shared_items:
+            flash("Patient did not authorize document sharing.", "danger")
+            return redirect(url_for('view_doctor_share', token=token))
+
+        db_session.expunge(doc)
+
+    full_path = os.path.join(app.root_path, '..', doc.file_path)
+    if not os.path.exists(full_path):
+        flash("File not found on server.", "warning")
+        return redirect(url_for('view_doctor_share', token=token))
+
+    return send_from_directory(os.path.dirname(full_path), os.path.basename(full_path), as_attachment=False)
+
+@app.route('/doctor-share/<string:token>/document/<int:doc_id>/download')
+def download_shared_doctor_document(token, doc_id):
+    now_ts = time.time()
+    with Session() as db_session:
+        share = db_session.query(DoctorShare).filter_by(token=token).first()
+        if not share or share.is_revoked or now_ts >= share.expires_at_timestamp:
+            flash("Doctor sharing link is invalid or expired.", "danger")
+            return redirect(url_for('login'))
+
+        doc = db_session.get(MedicalDocument, doc_id)
+        if not doc or doc.user_id != share.user_id:
+            flash("Document not found or unauthorized.", "danger")
+            return redirect(url_for('login'))
+
+        try:
+            shared_items = json.loads(share.shared_sections_json)
+        except Exception:
+            shared_items = []
+
+        if 'lab_reports' not in shared_items and 'medical_documents' not in shared_items:
+            flash("Patient did not authorize document sharing.", "danger")
+            return redirect(url_for('view_doctor_share', token=token))
+
+        db_session.expunge(doc)
+
+    full_path = os.path.join(app.root_path, '..', doc.file_path)
+    if not os.path.exists(full_path):
+        flash("File not found on server.", "warning")
+        return redirect(url_for('view_doctor_share', token=token))
+
+    return send_from_directory(os.path.dirname(full_path), os.path.basename(full_path), as_attachment=True, download_name=doc.file_name)
 
 @app.route('/logout')
 def logout():
@@ -772,3 +1048,4 @@ def logout():
     session.clear()
     flash("You have been logged out.", "info")
     return redirect(url_for('login'))
+
